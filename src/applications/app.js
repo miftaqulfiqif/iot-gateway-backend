@@ -12,7 +12,7 @@ const allowedOrigin = ["http://localhost:5173"];
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigin,
+    origin: "*",
     methods: ["GET", "POST"],
     credentials: true,
     allowedHeaders: ["Authorization", "Content-Type"],

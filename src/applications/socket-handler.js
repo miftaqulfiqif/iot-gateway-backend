@@ -6,6 +6,7 @@ class SocketHandler {
 
     //Join to room
     socket.on("join", (userId) => HandleService.joinRoom(socket, userId));
+    socket.on("message", (data) => HandleService.handleMessage(data));
     //Handle start app
     socket.on("start", (data) => HandleService.handleStart(data));
     //Handle any status device
