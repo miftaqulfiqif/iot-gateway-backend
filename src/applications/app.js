@@ -8,10 +8,13 @@ const port = 3000;
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigin = ["http://localhost:5173"];
+
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: allowedOrigin,
     methods: ["GET", "POST"],
+    credentials: true,
     allowedHeaders: ["Authorization", "Content-Type"],
   },
 });
