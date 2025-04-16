@@ -1,12 +1,8 @@
 import { io, server, port } from "./applications/app.js";
-import SocketHandler from "./applications/socket-handler.js";
+import { setupSocket } from "./services/socket-services.js";
 
-const socketHandler = new SocketHandler();
-
-io.on("connection", (socket) => {
-  socketHandler.handleConnection(socket);
-});
+setupSocket(io);
 
 server.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`🚀 Server running on http://localhost:${port}`);
 });

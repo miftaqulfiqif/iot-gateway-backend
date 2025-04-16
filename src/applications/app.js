@@ -2,24 +2,37 @@ import express from "express";
 import http from "http";
 import cors from "cors";
 import { Server } from "socket.io";
+import mqtt from "mqtt";
 
-const port = 3000;
+// ==== Konfigurasi ====
+const port = process.env.PORT || 3000;
+const allowedOrigins = ["http://localhost:5173"];
+const mqttClient = mqtt.connect("mqtt://broker.emqx.io:1883");
 
+// ==== Inisialisasi ====
 const app = express();
 const server = http.createServer(app);
 
-const allowedOrigin = ["http://localhost:5173"];
+mqttClient.on("connect", () => {
+  console.log("Connected to MQTT broker");
+});
 
+mqttClient.on("error", (err) => {
+  console.error("MQTT connection error:", err);
+});
+
+// ==== WebSocket (Socket.IO) ====
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
     allowedHeaders: ["Authorization", "Content-Type"],
   },
 });
 
+// ==== Middleware ====
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
-app.use(cors());
 
-export { app, server, io, port };
+export { app, server, io, port, mqttClient };
