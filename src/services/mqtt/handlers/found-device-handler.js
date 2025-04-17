@@ -1,4 +1,5 @@
 import BaseHandler from "./base-handler.js";
+import userMap from "../../user-map.js";
 
 export default class FoundDevicesHandler extends BaseHandler {
   get topic() {
@@ -6,15 +7,14 @@ export default class FoundDevicesHandler extends BaseHandler {
   }
 
   handle(topic, message) {
-    const data = JSON.parse(message.toString());
-    const userId = data.userId;
+    const userId = "UserTest";
 
-    if (userId) {
-      this.io.to(userId).emit("found_devices", data);
-      console.log(`MQTT [${topic}] → WebSocket user ${userId}:`, data);
-    } else {
-      this.io.to(userId).emit("found_devices", data);
-      console.log(`MQTT [${topic}] missing userId`, data);
-    }
+    const socketId = userMap.get(userId);
+
+    const data = JSON.parse(message.toString());
+    // const userId = data.userId;
+
+    console.log(`✅ Emitting to user ${userId}:`, { devices: [data] });
+    this.io.to(userId).emit("found_devices", { devices: [data] });
   }
 }
