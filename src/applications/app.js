@@ -3,6 +3,7 @@ import http from "http";
 import cors from "cors";
 import { Server } from "socket.io";
 import mqtt from "mqtt";
+import { publicRouter } from "../routes/public-api.js";
 
 // ==== Konfigurasi ====
 const port = process.env.PORT || 3000;
@@ -32,7 +33,8 @@ const io = new Server(server, {
 });
 
 // ==== Middleware ====
-app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
+app.use(cors({ origin: allowedOrigins }));
+app.use(publicRouter);
 
 export { app, server, io, port, mqttClient };

@@ -3,6 +3,7 @@ import ScanHandler from "./socket/handlers/scan-handler.js";
 import JoinRoomHandler from "./socket/handlers/join-room-handler.js";
 import DisconnectHandler from "./socket/handlers/disconnect-handler.js";
 import ConnectDeviceHandler from "./socket/handlers/connect-device.js";
+import DeleteDeviceHandler from "./socket/handlers/delete-device.js";
 
 export function setupSocket(io) {
   const router = new SocketRouter(io);
@@ -11,6 +12,7 @@ export function setupSocket(io) {
   router.registerHandler(DisconnectHandler);
   router.registerHandler(ScanHandler);
   router.registerHandler(ConnectDeviceHandler);
+  router.registerHandler(DeleteDeviceHandler);
 
   io.on("connection", (socket) => {
     router.handleConnection(socket);
