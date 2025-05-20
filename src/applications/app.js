@@ -6,7 +6,7 @@ import mqtt from "mqtt";
 import { publicRouter } from "../routes/public-api.js";
 
 // ==== Konfigurasi ====
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 const allowedOrigins = ["http://localhost:5173"];
 const mqttClient = mqtt.connect("mqtt://broker.emqx.io:1883");
 

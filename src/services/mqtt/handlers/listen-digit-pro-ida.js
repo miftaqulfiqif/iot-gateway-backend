@@ -9,7 +9,12 @@ export default class ListenDigitProIDA extends BaseHandler {
   handle(topic, message) {
     const userId = "UserTest";
 
-    const socketId = userMap.get(userId);
+    // const socketId = userMap.get(userId);
+    // if (!socketId) {
+    //   console.warn(`⚠️ No socket found for userId: ${userId}`);
+    //   return;
+    // }
+    // this.io.to(socketId).emit("listen_digitproida", { data_digitproida: [data] });
 
     const data = JSON.parse(message.toString());
     // const userId = data.userId;

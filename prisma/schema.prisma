@@ -18,6 +18,23 @@ model Device {
   id Int @id @default(autoincrement())
   mac String @unique
   name String @db.VarChar(255)
+  display_name String? @db.VarChar(255)
 
   @@map("devices")
+}
+
+model Patient {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(255)
+  gender String @db.VarChar(255)
+  address String?
+  place_of_birth String?
+  date_of_birth String
+  religion String?
+  phone String?
+  work String?
+  last_education String?
+  age Int
+
+  @@map("patients")
 }

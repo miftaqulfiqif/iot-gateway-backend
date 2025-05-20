@@ -27,6 +27,7 @@ export default class ConnectDeviceHandler extends BaseHandler {
           data: {
             mac: payload.payload.mac,
             name: payload.payload.name,
+            display_name: payload.payload.name,
           },
         });
       }
