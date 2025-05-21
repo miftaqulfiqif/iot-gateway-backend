@@ -1,6 +1,7 @@
 import BaseHandler from "./base-handler.js";
 import userMap from "../../user-map.js";
 import { parseDataBMI } from "../../../generated/data_bmi.js";
+import { calculateHealthMetrics } from "../../../generated/calculate-healt-metrics.js";
 
 export default class ListenBMI extends BaseHandler {
   get topic() {
@@ -18,9 +19,11 @@ export default class ListenBMI extends BaseHandler {
     const raw = message.toString();
     const data = parseDataBMI(raw);
 
+    const calcBMI = calculateHealthMetrics(data);
+
     console.log(`✅ Emitting to user ${userId}:`, {
-      data_bmi: [data],
+      data_bmi: [calcBMI],
     });
-    this.io.to(userId).emit("listen_bmi", { data_bmi: [data] });
+    this.io.to(userId).emit("listen_bmi", { data_bmi: [calcBMI] });
   }
 }

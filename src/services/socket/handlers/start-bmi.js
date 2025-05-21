@@ -1,5 +1,6 @@
 import BaseHandler from "./base-handler.js";
 import { mqttClient } from "../../../applications/app.js";
+import { calculateHealthMetrics } from "../../../generated/calculate-healt-metrics.js";
 
 export default class StartBMI extends BaseHandler {
   event = "start_bmi";
@@ -15,32 +16,46 @@ export default class StartBMI extends BaseHandler {
 
     const dataPatient = data.data.patient;
 
-    mqttClient.publish(payload.topic, payload.payload, (err) => {
-      if (err) {
-        console.log("❌ MQTT publish error:", err);
-      } else {
-        console.log(`✅ MQTT message published to ${payload.topic}`);
-        console.log(
-          `Received start bmi from ${user_id}: payload : `,
-          payload.payload
-        );
+    const data_bmi = [
+      {
+        weight: 87,
+        age: 23,
+        gender: "male",
+        bmiWeight: 17.9,
+        impedance: 600,
+      },
+    ];
 
-        mqttClient.publish(
-          "ble/start_bmi/patient",
-          JSON.stringify(dataPatient),
-          (err) => {
-            if (err) {
-              console.log("❌ MQTT publish error:", err);
-            } else {
-              console.log(`✅ MQTT message published to ble/start_bmi/patient`);
-              console.log(
-                `Received start bmi from ${user_id}: patient : `,
-                dataPatient
-              );
-            }
-          }
-        );
-      }
-    });
+    const result = calculateHealthMetrics(data_bmi[0]);
+
+    console.log("RESULT : ", result);
+
+    // mqttClient.publish(payload.topic, payload.payload, (err) => {
+    //   if (err) {
+    //     console.log("❌ MQTT publish error:", err);
+    //   } else {
+    //     console.log(`✅ MQTT message published to ${payload.topic}`);
+    //     console.log(
+    //       `Received start bmi from ${user_id}: payload : `,
+    //       payload.payload
+    //     );
+
+    //     mqttClient.publish(
+    //       "ble/start_bmi/patient",
+    //       JSON.stringify(dataPatient),
+    //       (err) => {
+    //         if (err) {
+    //           console.log("❌ MQTT publish error:", err);
+    //         } else {
+    //           console.log(`✅ MQTT message published to ble/start_bmi/patient`);
+    //           console.log(
+    //             `Received start bmi from ${user_id}: patient : `,
+    //             dataPatient
+    //           );
+    //         }
+    //       }
+    //     );
+    //   }
+    // });
   }
 }
