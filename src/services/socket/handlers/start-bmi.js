@@ -18,10 +18,10 @@ export default class StartBMI extends BaseHandler {
 
     const data_bmi = [
       {
-        weight: 87,
+        height: 172,
         age: 23,
         gender: "male",
-        bmiWeight: 17.9,
+        bmiWeight: 87,
         impedance: 600,
       },
     ];
