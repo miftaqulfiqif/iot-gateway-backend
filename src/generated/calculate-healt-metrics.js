@@ -36,6 +36,7 @@ export function calculateHealthMetrics(data) {
   return {
     weight: bmiWeight,
     age: age,
+    impedance: impedance,
     bmi: parseFloat(BMI.toFixed(1)),
     weight: parseFloat(bmiWeight.toFixed(1)),
     bmi: parseFloat(BMI.toFixed(1)),
