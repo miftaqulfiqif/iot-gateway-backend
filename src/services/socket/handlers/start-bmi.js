@@ -1,6 +1,6 @@
 import BaseHandler from "./base-handler.js";
 import { mqttClient } from "../../../applications/app.js";
-import { calculateHealthMetrics } from "../../../generated/calculate-healt-metrics.js";
+import { calculateHealthMetrics } from "../../../applications/generator/calculate-healt-metrics.js";
 
 export default class StartBMI extends BaseHandler {
   event = "start_bmi";

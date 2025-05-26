@@ -1,14 +1,14 @@
 import { prismaClient } from "../../applications/database.js";
 
 const connectDevice = async (device) => {
-  const deviceConnecting = await prismaClient.device.create({
+  const deviceConnecting = await prismaClient.deviceConnected.create({
     data: device,
   });
 
   return deviceConnecting;
 };
 const disconnectDevice = async (mac) => {
-  const deviceDisconnecting = await prismaClient.device.delete({
+  const deviceDisconnecting = await prismaClient.deviceConnected.delete({
     where: {
       mac: mac,
     },
@@ -16,7 +16,7 @@ const disconnectDevice = async (mac) => {
   return deviceDisconnecting;
 };
 const getDevices = async () => {
-  return await prismaClient.device.findMany();
+  return await prismaClient.deviceConnected.findMany();
 };
 
 export { connectDevice, disconnectDevice, getDevices };

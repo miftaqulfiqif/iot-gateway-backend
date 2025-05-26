@@ -1,7 +1,7 @@
 import BaseHandler from "./base-handler.js";
 import userMap from "../../user-map.js";
-import { parseDataBMI } from "../../../generated/data_bmi.js";
-import { calculateHealthMetrics } from "../../../generated/calculate-healt-metrics.js";
+import { parseDataBMI } from "../../../applications/generator/data_bmi.js";
+import { calculateHealthMetrics } from "../../../applications/generator/calculate-healt-metrics.js";
 
 export default class ListenBMI extends BaseHandler {
   get topic() {

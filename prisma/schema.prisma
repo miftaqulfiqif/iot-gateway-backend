@@ -14,27 +14,186 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Device {
+model Hospital {
+  id String @id @default(uuid())
+  name String @db.VarChar(255)
+  logo_path String?
+
+  user User[]
+  devices_connected DeviceConnected[]
+  patient_handlers PatientHandler[]
+
+  @@map("hospitals")
+}
+
+model User {
+  id String @id @default(uuid())
+  username String @unique 
+  password String
+  token String? 
+  is_active Boolean
+  
+  role_id Int
+  hospital_id String
+
+  hospital Hospital @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  admin    Admin?   @relation("UserAdmin")
+  doctor   Doctor?  @relation("UserDoctor")
+  nurse    Nurse?   @relation("UserNurse")
+   
+  patient_handle PatientHandler[]
+  activity_log ActivityLogs[]
+  profile_picture ProfilePicture?
+
+  @@map("users")
+}
+
+model Role {
   id Int @id @default(autoincrement())
+  name String @unique
+  kode String
+  
+  user User[]
+
+  @@map("roles")
+}
+
+model Admin{
+  name String 
+
+  user_id String @id
+  
+  user   User     @relation("UserAdmin", fields: [user_id], references: [id])
+
+  doctor Doctor[]
+  nurse Nurse[]
+
+  @@map("admins")
+}
+
+model Doctor{
+  name String 
+
+  user_id String @id @unique
+  admin_id String
+  
+  user  User  @relation("UserDoctor", fields: [user_id], references: [id])
+  admin Admin @relation(fields: [admin_id], references: [user_id])
+
+  @@map("doctors")
+}
+
+model Nurse{
+  name String 
+
+  user_id String @id @unique
+  admin_id String
+  
+  user  User  @relation("UserNurse", fields: [user_id], references: [id])
+  admin Admin @relation(fields: [admin_id], references: [user_id])
+
+  @@map("nurses")
+}
+
+model ProfilePicture {
+  id Int @id @default(autoincrement())
+  path String
+  
+  user_id String @unique
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("profile_pictures")
+}
+
+model DeviceConnected {
   mac String @unique
   name String @db.VarChar(255)
   display_name String? @db.VarChar(255)
 
-  @@map("devices")
+  hospital_id String
+
+  hospital Hospital @relation(fields: [hospital_id], references: [id])
+
+  @@map("devices_connected")
+}
+
+model PatientHandler {
+  id String @id @default(uuid())
+  user_id String
+  patient_id String
+  hospital_id String
+
+  user User @relation(fields: [user_id], references: [id])
+  patient Patient @relation(fields: [patient_id], references: [id])
+  hospital Hospital @relation(fields: [hospital_id], references: [id])
+
+  measurement_histories MeasurementHistories[]
+
+  @@map("patient_handlers")
 }
 
 model Patient {
-  id Int @id @default(autoincrement())
+  id String @id @default(uuid())
+  barcode_img String
   name String @db.VarChar(255)
   gender String @db.VarChar(255)
   address String?
-  place_of_birth String?
-  date_of_birth String
-  religion String?
   phone String?
   work String?
   last_education String?
+  place_of_birth String?
+  date_of_birth String
+  religion String?
+  weight Int?
   age Int
 
+  patient_handle PatientHandler[]
+
   @@map("patients")
+}
+
+model MeasurementHistories{
+  id String @id @default(uuid())
+  data Json
+  timestamp DateTime @default(now())
+
+  patient_handler_id String
+  device_type_id String
+
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+  device_type DeviceType @relation(fields: [device_type_id], references: [id])
+
+  @@map("measurement_histories")
+}
+
+model DeviceType{
+  id String @id @default(uuid())
+  name String
+  label String
+  description String @db.Text
+
+  measurement_histories MeasurementHistories[]
+
+  @@map("device_types")
+}
+
+//Activity
+model ActivityLogs{
+  id String @id @default(uuid())
+  action String
+  description String @db.Text
+  target_table String
+  target_id String?
+  ip_address String?
+  user_agent String?
+  timestamp DateTime @default(now())
+
+  user_id String
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("activity_logs")
 }

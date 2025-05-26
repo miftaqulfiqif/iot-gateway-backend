@@ -4,9 +4,12 @@ import cors from "cors";
 import { Server } from "socket.io";
 import mqtt from "mqtt";
 import { publicRouter } from "../routes/public-api.js";
+import { privateRouter } from "../routes/private-api.js";
+import { errorMiddleware } from "../middleware/error-middleware.js";
+import cookieParser from "cookie-parser";
 
 // ==== Konfigurasi ====
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 const allowedOrigins = ["http://localhost:5173"];
 const mqttClient = mqtt.connect("mqtt://broker.emqx.io:1883");
 
@@ -33,8 +36,11 @@ const io = new Server(server, {
 });
 
 // ==== Middleware ====
+app.use(cookieParser());
 app.use(express.json());
 app.use(cors({ origin: allowedOrigins }));
 app.use(publicRouter);
+app.use(privateRouter);
+app.use(errorMiddleware);
 
 export { app, server, io, port, mqttClient };
