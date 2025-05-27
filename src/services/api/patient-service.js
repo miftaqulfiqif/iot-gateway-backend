@@ -1,7 +1,9 @@
 import { prismaClient } from "../../applications/database.js";
 import { generateAge } from "../../applications/generator/patient-age.js";
 import bwipjs from "bwip-js";
+import { ResponseError } from "../../errors/response-error.js";
 
+// Create new patient
 export const createPatient = async (user, patient) => {
   try {
     // Generate age
@@ -55,6 +57,52 @@ export const createPatient = async (user, patient) => {
   }
 };
 
+// Pagination patient by hospital
+export const getPatientByHospitalService = async (
+  hospital,
+  page,
+  limit,
+  skip,
+  query
+) => {
+  try {
+    const searchCondition = query
+      ? {
+          OR: [{ name: { contains: query } }],
+        }
+      : {};
+
+    const whereConditions = {
+      ...searchCondition,
+      patient_handle: {
+        some: {
+          hospital_id: hospital.id,
+        },
+      },
+    };
+
+    const total = await prismaClient.patient.count({ where: whereConditions });
+
+    const patient = await prismaClient.patient.findMany({
+      where: whereConditions,
+      skip: skip,
+      take: limit,
+      orderBy: {
+        id: "desc",
+      },
+    });
+
+    return {
+      total,
+      page,
+      limit,
+      data: patient,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Get all patients
 export const getPatients = async () => {
   try {
@@ -64,7 +112,7 @@ export const getPatients = async () => {
   }
 };
 
-// Get patient
+// Get single patient
 export const getPatient = async (id) => {
   try {
     return await prismaClient.patient.findUnique({
@@ -85,7 +133,7 @@ export const showBarcodeTestService = async (id) => {
     });
 
     if (!patient || !patient.barcode_img) {
-      return res.status(404).send("Barcode not found");
+      throw new ResponseError(404, "Patient not found");
     }
 
     // Hapus prefix data URI

@@ -17,9 +17,7 @@ const connect = async (req, res, next) => {
 };
 const disconnect = async (req, res, next) => {
   try {
-    const mac = req.params.mac;
-    console.log("mac", mac);
-    const deviceDisconnecting = await disconnectDevice(mac);
+    const deviceDisconnecting = await disconnectDevice(req.params.mac);
     res
       .status(200)
       .json({ message: "Device disconnected", data: deviceDisconnecting });

@@ -10,15 +10,6 @@ publicRouter.post("/api/users", userController.register);
 publicRouter.post("/api/users-login", userController.login);
 
 publicRouter.get("/", (req, res) => res.send("Hello World!"));
-publicRouter.get("/api/devices", deviceController.get);
-publicRouter.post("/api/devices/connect", deviceController.connect);
-publicRouter.delete(
-  "/api/devices/disconnect/:mac",
-  deviceController.disconnect
-);
 
-//Patient
-publicRouter.get("/api/patients", patientController.getAll);
-publicRouter.get("/api/patient/:id", patientController.get);
 
 export { publicRouter };
