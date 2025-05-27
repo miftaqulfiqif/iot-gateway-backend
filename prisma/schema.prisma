@@ -137,7 +137,7 @@ model PatientHandler {
 
 model Patient {
   id String @id @default(uuid())
-  barcode_img String
+  barcode_img String @db.LongText
   name String @db.VarChar(255)
   gender String @db.VarChar(255)
   address String?

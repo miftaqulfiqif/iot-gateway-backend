@@ -1,7 +1,8 @@
 import { prismaClient } from "../../applications/database.js";
 import { generateAge } from "../../applications/generator/patient-age.js";
+import bwipjs from "bwip-js";
 
-export const createPatient = async (patient) => {
+export const createPatient = async (user, patient) => {
   try {
     // Generate age
     const age = generateAge(patient.date_of_birth);
@@ -9,23 +10,52 @@ export const createPatient = async (patient) => {
     // Generated id
     const patientId = await generatePatientId(
       patient.gender === "male" ? "L" : "P",
-      generateAge(patient.date_of_birth)
+      age
     );
 
-    const patientCreating = await prismaClient.patient.create({
-      data: {
-        id: patientId,
-        ...patient,
-        age: age,
-      },
+    // Generate barcode
+    const patientBarcode = await bwipjs.toBuffer({
+      bcid: "code128",
+      text: patientId,
+      scale: 3,
+      height: 10,
+      includetext: false,
     });
 
-    return patientCreating;
+    // Convert to base64
+    const barcodeBase64 = `data:image/png;base64,${patientBarcode.toString(
+      "base64"
+    )}`;
+
+    //Save to database
+    let newPatient = null;
+    await prismaClient.$transaction(async (tx) => {
+      // Create patient
+      newPatient = await tx.patient.create({
+        data: {
+          id: patientId,
+          age: age,
+          barcode_img: barcodeBase64,
+          ...patient,
+        },
+      });
+
+      // Create patient handler
+      await tx.patientHandler.create({
+        data: {
+          user_id: user.id,
+          patient_id: newPatient.id,
+          hospital_id: user.hospital_id,
+        },
+      });
+    });
+    return newPatient;
   } catch (error) {
     throw error;
   }
 };
 
+// Get all patients
 export const getPatients = async () => {
   try {
     return await prismaClient.patient.findMany();
@@ -34,6 +64,7 @@ export const getPatients = async () => {
   }
 };
 
+// Get patient
 export const getPatient = async (id) => {
   try {
     return await prismaClient.patient.findUnique({
@@ -41,6 +72,30 @@ export const getPatient = async (id) => {
         id: id,
       },
     });
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Show barcode to Postman
+export const showBarcodeTestService = async (id) => {
+  try {
+    const patient = await prismaClient.patient.findUnique({
+      where: { id },
+    });
+
+    if (!patient || !patient.barcode_img) {
+      return res.status(404).send("Barcode not found");
+    }
+
+    // Hapus prefix data URI
+    const base64Data = patient.barcode_img.replace(
+      /^data:image\/png;base64,/,
+      ""
+    );
+    const imageBuffer = Buffer.from(base64Data, "base64");
+
+    return imageBuffer;
   } catch (error) {
     throw error;
   }
@@ -62,8 +117,9 @@ const generatePatientId = async (genderCode, age) => {
     while (true) {
       // Generate random number 10 digits
       const randomNum = Math.floor(1000000000 + Math.random() * 9000000000);
-      patientCode = `PAT${genderCode}${age}${randomNum}`;
+      patientId = `PAT${genderCode}${age}${randomNum}`;
 
+      // Check if patientId is already exist
       const existingRandom = await prismaClient.patient.findUnique({
         where: { id: patientId },
       });

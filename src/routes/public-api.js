@@ -18,7 +18,6 @@ publicRouter.delete(
 );
 
 //Patient
-publicRouter.post("/api/patients", patientController.create);
 publicRouter.get("/api/patients", patientController.getAll);
 publicRouter.get("/api/patient/:id", patientController.get);
 
