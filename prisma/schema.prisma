@@ -109,9 +109,13 @@ model ProfilePicture {
 }
 
 model DeviceConnected {
-  mac String @unique
+  mac String @id @unique
   name String @db.VarChar(255)
-  display_name String? @db.VarChar(255)
+  code String @unique
+  type String @db.VarChar(255)
+  connection String
+
+  label String? @db.VarChar(255)
 
   hospital_id String
 
@@ -161,23 +165,11 @@ model MeasurementHistories{
   timestamp DateTime @default(now())
 
   patient_handler_id String
-  device_type_id String
+  device String
 
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
-  device_type DeviceType @relation(fields: [device_type_id], references: [id])
 
   @@map("measurement_histories")
-}
-
-model DeviceType{
-  id String @id @default(uuid())
-  name String
-  label String
-  description String @db.Text
-
-  measurement_histories MeasurementHistories[]
-
-  @@map("device_types")
 }
 
 //Activity

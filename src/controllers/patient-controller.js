@@ -1,6 +1,9 @@
+import { logger } from "../applications/logging.js";
+import { ResponseError } from "../errors/response-error.js";
 import {
   createPatient,
   getPatient,
+  getPatientByHospitalService,
   getPatients,
   showBarcodeTestService,
 } from "../services/api/patient-service.js";
@@ -33,6 +36,35 @@ const getAll = async (req, res, next) => {
   }
 };
 
+// Get patients by hospital
+const getPatientsByHospital = async (req, res, next) => {
+  const hospital = req.user.hospital_id;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const query = req.query.query || "";
+
+  try {
+    const result = await getPatientByHospitalService(
+      hospital,
+      page,
+      limit,
+      skip,
+      query
+    );
+
+    res.status(200).json({
+      current_page: page,
+      total_items: result.total,
+      total_pages: Math.ceil(result.total / limit),
+      data: result.data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Show barcode test
 const showBarcodeTest = async (req, res, next) => {
   try {
     const result = await showBarcodeTestService(req.params.id);
@@ -43,4 +75,4 @@ const showBarcodeTest = async (req, res, next) => {
   }
 };
 
-export default { create, get, getAll, showBarcodeTest };
+export default { create, get, getAll, getPatientsByHospital, showBarcodeTest };
