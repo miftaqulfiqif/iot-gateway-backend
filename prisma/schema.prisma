@@ -144,7 +144,7 @@ model Patient {
   barcode_img String @db.LongText
   name String @db.VarChar(255)
   gender String @db.VarChar(255)
-  address String?
+  address String? @db.LongText
   phone String?
   work String?
   last_education String?

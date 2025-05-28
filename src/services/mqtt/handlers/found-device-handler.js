@@ -12,9 +12,22 @@ export default class FoundDevicesHandler extends BaseHandler {
     const socketId = userMap.get(userId);
 
     const data = JSON.parse(message.toString());
+    const attemptData = { ...data, connection: "bluetooth" };
+
     // const userId = data.userId;
 
-    console.log(`✅ Emitting to user ${userId}:`, { devices: [data] });
-    this.io.to(userId).emit("found_devices", { devices: [data] });
+    // const device = {
+    //   id: 1,
+    //   mac: "mac_test",
+    //   name: "Digit Pro IDA",
+    //   rssi: 68,
+    //   filteredRSSI: -62,
+    //   distance: 0.76,
+    //   device_function: "digit_pro_ida",
+    //   connection: "bluetooth",
+    // };
+
+    console.log(`✅ Emitting to user ${userId}:`, { devices: [attemptData] });
+    this.io.to(userId).emit("found_devices", { devices: [attemptData] });
   }
 }

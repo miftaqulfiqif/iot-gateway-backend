@@ -14,10 +14,14 @@ privateRouter.post("/api/user-logout", userController.logout); // Logout
 
 // Patient
 privateRouter.post("/api/patients", patientController.create); // Create
+privateRouter.patch("/api/patient-update/:id", patientController.update); // Update
 privateRouter.get(
   "/api/patients-by-hospital",
   patientController.getPatientsByHospital
 ); // Get patients by hospital
+privateRouter.get("/api/patients-by-user", patientController.getPatientsByUser); // Get patients by user
+privateRouter.get("/api/patients", patientController.getAll); // Get all
+privateRouter.get("/api/patient/:id", patientController.get); // Get
 
 // Show barcode patient
 privateRouter.get(

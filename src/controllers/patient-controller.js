@@ -4,8 +4,10 @@ import {
   createPatient,
   getPatient,
   getPatientByHospitalService,
+  getPatientByUserService,
   getPatients,
   showBarcodeTestService,
+  updatePatientService,
 } from "../services/api/patient-service.js";
 
 const create = async (req, res, next) => {
@@ -64,6 +66,45 @@ const getPatientsByHospital = async (req, res, next) => {
   }
 };
 
+// Update
+const update = async (req, res, next) => {
+  try {
+    const result = await updatePatientService(req.params.id, req.body);
+    res.status(200).json({
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get patients by user
+const getPatientsByUser = async (req, res, next) => {
+  const userId = req.user.id;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const query = req.query.query || "";
+
+  try {
+    const result = await getPatientByUserService(
+      userId,
+      page,
+      limit,
+      skip,
+      query
+    );
+    res.status(200).json({
+      current_page: page,
+      total_items: result.total,
+      total_pages: Math.ceil(result.total / limit),
+      data: result.data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Show barcode test
 const showBarcodeTest = async (req, res, next) => {
   try {
@@ -75,4 +116,12 @@ const showBarcodeTest = async (req, res, next) => {
   }
 };
 
-export default { create, get, getAll, getPatientsByHospital, showBarcodeTest };
+export default {
+  create,
+  update,
+  get,
+  getAll,
+  getPatientsByHospital,
+  getPatientsByUser,
+  showBarcodeTest,
+};
