@@ -103,6 +103,115 @@ export const getPatientByHospitalService = async (
   }
 };
 
+// Get patients by user
+export const getPatientByUserService = async (
+  userId,
+  page,
+  limit,
+  skip,
+  query
+) => {
+  try {
+    const searchCondition = query
+      ? {
+          OR: [{ name: { contains: query } }],
+        }
+      : {};
+
+    const whereConditions = {
+      ...searchCondition,
+      patient_handle: {
+        some: {
+          user_id: userId,
+        },
+      },
+    };
+
+    const total = await prismaClient.patient.count({ where: whereConditions });
+
+    const patient = await prismaClient.patient.findMany({
+      where: whereConditions,
+      skip: skip,
+      take: limit,
+      orderBy: {
+        id: "desc",
+      },
+    });
+
+    return {
+      total,
+      page,
+      limit,
+      data: patient,
+    };
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Update patient
+export const updatePatientService = async (patientId, body) => {
+  try {
+    const patientFound = await prismaClient.patient.findUnique({
+      where: {
+        id: patientId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!patientFound) {
+      throw new ResponseError(404, "Patient not found");
+    }
+
+    const data = {};
+
+    if (body.name) {
+      data.name = body.name;
+    }
+    if (body.gender) {
+      data.gender = body.gender;
+    }
+    if (body.phone) {
+      data.phone = body.phone;
+    }
+    if (body.work) {
+      data.work = body.work;
+    }
+    if (body.last_education) {
+      data.last_education = body.last_education;
+    }
+    if (body.place_of_birth) {
+      data.place_of_birth = body.place_of_birth;
+    }
+    if (body.date_of_birth) {
+      data.date_of_birth = body.date_of_birth;
+    }
+
+    return prismaClient.patient.update({
+      where: {
+        id: patientId,
+      },
+      data: {
+        ...data,
+      },
+      select: {
+        id: true,
+        name: true,
+        gender: true,
+        phone: true,
+        work: true,
+        last_education: true,
+        place_of_birth: true,
+        date_of_birth: true,
+      },
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Get all patients
 export const getPatients = async () => {
   try {
