@@ -17,7 +17,7 @@ const register = async (req, res, next) => {
 const currentUser = async (req, res, next) => {
   try {
     const result = await currentUserService(req.user.username);
-    res.status(200).json({ data: result });
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }

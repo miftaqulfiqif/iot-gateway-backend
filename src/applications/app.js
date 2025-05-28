@@ -38,7 +38,7 @@ const io = new Server(server, {
 // ==== Middleware ====
 app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
-app.use(cors({ origin: allowedOrigins }));
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(publicRouter);
 app.use(privateRouter);
 app.use(errorMiddleware);

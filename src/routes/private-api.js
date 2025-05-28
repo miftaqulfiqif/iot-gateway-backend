@@ -48,11 +48,11 @@ privateRouter.get(
 ); // Get by user
 
 // Device
-privateRouter.post("/api/devices/connect", deviceController.connect);
-privateRouter.get("/api/devices", deviceController.get);
+privateRouter.post("/api/devices/connect", deviceController.connect); // Connect device
+privateRouter.get("/api/devices", deviceController.get); // Get all device connected
 privateRouter.delete(
   "/api/devices/disconnect/:mac",
   deviceController.disconnect
-);
+); // Disconnect device
 
 export { privateRouter };
