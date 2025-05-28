@@ -75,9 +75,10 @@ export const registerService = async (request) => {
   }
 };
 
+// Get current user
 export const currentUserService = async (username) => {
   try {
-    return await prismaClient.user.findUnique({
+    const user = await prismaClient.user.findUnique({
       where: {
         username: username,
       },
@@ -87,8 +88,38 @@ export const currentUserService = async (username) => {
         admin: true,
         doctor: true,
         nurse: true,
+        profile_picture: true,
       },
     });
+
+    if (!user) {
+      throw new ResponseError(404, "User not found");
+    }
+
+    // Get role
+    const roleName = user.role?.name ?? "";
+    // Get name by role
+    let name = "";
+    if (roleName === "admin") {
+      name = user.admin?.name ?? "";
+    } else if (roleName === "doctor") {
+      name = user.doctor?.name ?? "";
+    } else if (roleName === "nurse") {
+      name = user.nurse?.name ?? "";
+    }
+
+    return {
+      name: name,
+      username: user.username,
+      profile_picture: user.profile_picture?.path ?? "",
+      role: user.role?.name ?? "",
+      hospital: user.hospital
+        ? {
+            name: user.hospital.name,
+            logo_path: user.hospital.logo_path ?? "",
+          }
+        : null,
+    };
   } catch (error) {
     throw error;
   }
@@ -108,7 +139,6 @@ export const logOutService = async (username) => {
     throw new Error(`Failed to log out user ${username}: ${e.message}`);
   }
 };
-
 
 export const loginService = async (request) => {
   try {
