@@ -155,8 +155,24 @@ model Patient {
   age Int
 
   patient_handle PatientHandler[]
+  babies Baby[]
 
   @@map("patients")
+}
+
+model Baby {
+  id String @id @default(uuid())
+
+  name String
+  gender String
+  date_of_birth String
+  place_of_birth String?
+
+  patient_id String
+
+  patient Patient @relation(fields: [patient_id], references: [id])
+
+  @@map("babies")
 }
 
 model MeasurementHistories{
