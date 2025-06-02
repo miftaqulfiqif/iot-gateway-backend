@@ -2,6 +2,7 @@ import express from "express";
 import { authMiddleware } from "../middleware/auth-middleware.js";
 import userController from "../controllers/user-controller.js";
 import patientController from "../controllers/patient-controller.js";
+import babyController from "../controllers/baby-controller.js";
 import measurementHistoriesController from "../controllers/measurement-histories-controller.js";
 import deviceController from "../controllers/device-controller.js";
 
@@ -22,6 +23,10 @@ privateRouter.get(
 privateRouter.get("/api/patients-by-user", patientController.getPatientsByUser); // Get patients by user
 privateRouter.get("/api/patients", patientController.getAll); // Get all
 privateRouter.get("/api/patient/:id", patientController.get); // Get
+
+//Baby
+privateRouter.get("/api/babies", babyController.getAll); // Get all
+privateRouter.get("/api/baby/:patient_id", babyController.getByPatientId); // Get by patient id
 
 // Show barcode patient
 privateRouter.get(
