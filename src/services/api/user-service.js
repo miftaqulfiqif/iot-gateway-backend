@@ -115,6 +115,7 @@ export const currentUserService = async (username) => {
       role: user.role?.name ?? "",
       hospital: user.hospital
         ? {
+            id: user.hospital.id,
             name: user.hospital.name,
             logo_path: user.hospital.logo_path ?? "",
           }
@@ -182,6 +183,7 @@ export const loginService = async (request) => {
         },
         hospital: {
           select: {
+            id: true,
             name: true,
             logo_path: true,
           },

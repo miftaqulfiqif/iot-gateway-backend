@@ -111,8 +111,8 @@ model ProfilePicture {
 model DeviceConnected {
   mac String @id @unique
   name String @db.VarChar(255)
-  code String @unique
-  type String @db.VarChar(255)
+  code String
+  type String? @db.VarChar(255)
   connection String
 
   label String? @db.VarChar(255)

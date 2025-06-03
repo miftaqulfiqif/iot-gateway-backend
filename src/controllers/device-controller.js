@@ -28,7 +28,7 @@ const disconnect = async (req, res, next) => {
 const get = async (req, res, next) => {
   try {
     const devices = await getDevices();
-    res.status(200).json({ data: devices });
+    res.status(200).json({ message: "Get device success", data: devices });
   } catch (error) {
     next(error);
   }

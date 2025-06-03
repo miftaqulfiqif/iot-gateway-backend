@@ -21,3 +21,14 @@ export const getBabyByPatientIdService = async (patientId) => {
     throw error;
   }
 };
+
+// Create baby
+export const createBabyService = async (data) => {
+  try {
+    return await prismaClient.baby.create({
+      data: data,
+    });
+  } catch (error) {
+    throw error;
+  }
+}

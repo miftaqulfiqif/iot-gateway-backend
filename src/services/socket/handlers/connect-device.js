@@ -9,39 +9,66 @@ export default class ConnectDeviceHandler extends BaseHandler {
   }
 
   async handle(socket, data) {
-    const { user_id, data: payload } = data;
+    const { user_id, hospital_id, label, data: payload } = data;
+    const {
+      mac,
+      device: name,
+      device_function: code,
+      connection,
+      type,
+      name: displayName,
+      topic,
+    } = payload.payload;
 
+    // send to user
     socket.to(user_id).emit(this.event, data);
-    console.log(
-      `Received connect_device from ${user_id}:`,
-      payload.payload.mac
-    );
+    console.log(`Received connect_device from ${user_id}:`, payload);
+
+    // save device to database
     try {
-      const deviceFound = await prismaClient.device.findUnique({
-        where: {
-          mac: payload.payload.mac,
+      await prismaClient.deviceConnected.upsert({
+        where: { mac },
+        update: {
+          name,
+          display_name: displayName,
+          code,
+          connection,
+          label,
+          type,
+        },
+        create: {
+          mac,
+          name,
+          display_name: displayName,
+          code,
+          connection,
+          label,
+          hospital_id,
+          type,
         },
       });
-      if (!deviceFound) {
-        await prismaClient.device.create({
-          data: {
-            mac: payload.payload.mac,
-            name: payload.payload.name,
-            display_name: payload.payload.name,
-          },
-        });
-      }
 
-      console.log("Device saved");
+      console.log("Device saved or updated");
     } catch (error) {
       throw error;
     }
 
-    mqttClient.publish(payload.topic, payload.payload.mac, (err) => {
+    // payload to mqtt
+    const payloadSend = {
+      mac,
+      device_function: code,
+    };
+
+    // sent to mqtt
+    mqttClient.publish(payload.topic, JSON.stringify(payloadSend), (err) => {
       if (err) {
         console.log("❌ MQTT publish error:", err);
       } else {
-        console.log(`✅ MQTT message published to ${payload.topic}`);
+        console.log(
+          `✅ MQTT message published to ${topic}: ${JSON.stringify(
+            payloadSend
+          )}`
+        );
       }
     });
   }
