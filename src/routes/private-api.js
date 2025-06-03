@@ -27,6 +27,7 @@ privateRouter.get("/api/patient/:id", patientController.get); // Get
 //Baby
 privateRouter.get("/api/babies", babyController.getAll); // Get all
 privateRouter.get("/api/baby/:patient_id", babyController.getByPatientId); // Get by patient id
+privateRouter.post("/api/babies", babyController.create); // Create
 
 // Show barcode patient
 privateRouter.get(
