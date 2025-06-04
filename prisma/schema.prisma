@@ -109,13 +109,12 @@ model ProfilePicture {
 }
 
 model DeviceConnected {
-  mac String @id @unique
-  name String @db.VarChar(255)
-  code String
+  id String @id @unique
+  device String @db.VarChar(255)
+  device_function String
   type String? @db.VarChar(255)
   connection String
-
-  label String? @db.VarChar(255)
+  name String? @db.VarChar(255)
 
   hospital_id String
 
@@ -177,11 +176,12 @@ model Baby {
 
 model MeasurementHistories{
   id String @id @default(uuid())
+  device_id String
+  device String
   data Json
   timestamp DateTime @default(now())
 
   patient_handler_id String
-  device String
 
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
 
