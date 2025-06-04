@@ -34,8 +34,9 @@ export const createMeasurementHistoryService = async (
     const measurementHistory = await prismaClient.measurementHistories.create({
       data: {
         patient_handler_id: patientHandler.id,
-        data: dataMeasurement.data,
+        device_id: dataMeasurement.device_id,
         device: dataMeasurement.device,
+        data: dataMeasurement.data,
       },
     });
 

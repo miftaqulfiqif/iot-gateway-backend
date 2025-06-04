@@ -5,7 +5,7 @@ export const connectDevice = async (device) => {
   // Check if mac device exist
   const macDeviceFound = await prismaClient.deviceConnected.findUnique({
     where: {
-      mac: device.mac,
+      id: device.id,
     },
   });
   if (macDeviceFound) {
@@ -15,7 +15,7 @@ export const connectDevice = async (device) => {
   // Check if code device exist
   const codeDeviceFound = await prismaClient.deviceConnected.findUnique({
     where: {
-      mac: device.mac,
+      id: device.id,
     },
   });
   if (codeDeviceFound) {

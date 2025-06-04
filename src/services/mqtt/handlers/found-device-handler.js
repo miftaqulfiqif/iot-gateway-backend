@@ -7,7 +7,7 @@ export default class FoundDevicesHandler extends BaseHandler {
   }
 
   handle(topic, message) {
-    const userId = "UserTest";
+    const userId = "UserTest1";
 
     const socketId = userMap.get(userId);
 
