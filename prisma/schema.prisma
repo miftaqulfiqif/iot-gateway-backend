@@ -22,6 +22,7 @@ model Hospital {
   user User[]
   devices_connected DeviceConnected[]
   patient_handlers PatientHandler[]
+  iot_gateway IotGateway[]
 
   @@map("hospitals")
 }
@@ -123,6 +124,17 @@ model DeviceConnected {
   @@map("devices_connected")
 }
 
+model IotGateway {
+  id String @id @default(uuid())
+  name String
+
+  hospital_id String
+
+  hospital Hospital @relation(fields: [hospital_id], references: [id])
+
+  @@map("iot_gateways")
+}
+
 model PatientHandler {
   id String @id @default(uuid())
   user_id String
@@ -134,6 +146,7 @@ model PatientHandler {
   hospital Hospital @relation(fields: [hospital_id], references: [id])
 
   measurement_histories MeasurementHistories[]
+  measuremnt_histories_digit_pro_baby MeasurementHistoriesDigitProBaby[]
 
   @@map("patient_handlers")
 }
@@ -186,6 +199,21 @@ model MeasurementHistories{
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
 
   @@map("measurement_histories")
+}
+
+// Digit Pro Baby
+model MeasurementHistoriesDigitProBaby {
+  id Int @id @default(autoincrement())
+  device_id String
+  name String
+  weight Float
+  timestamp DateTime @default(now())
+
+  patient_handler_id String
+
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+  
+  @@map("measurement_histories_digit_pro_baby")
 }
 
 //Activity

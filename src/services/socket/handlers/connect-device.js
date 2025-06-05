@@ -9,16 +9,9 @@ export default class ConnectDeviceHandler extends BaseHandler {
   }
 
   async handle(socket, data) {
-    const { user_id, hospital_id, label, data: payload } = data;
-    const {
-      mac,
-      device: name,
-      device_function: code,
-      connection,
-      type,
-      name: displayName,
-      topic,
-    } = payload.payload;
+    const { user_id, hospital_id, display_name, data: payload } = data;
+    const { mac, device, device_function, connection, type, topic } =
+      payload.payload;
 
     // send to user
     socket.to(user_id).emit(this.event, data);
@@ -27,36 +20,32 @@ export default class ConnectDeviceHandler extends BaseHandler {
     // save device to database
     try {
       await prismaClient.deviceConnected.upsert({
-        where: { mac },
+        where: { id: mac },
         update: {
-          name,
-          display_name: displayName,
-          code,
-          connection,
-          label,
-          type,
+          device: device,
+          device_function: device_function,
+          connection: connection,
+          name: display_name,
+          type: type,
+          hospital_id: hospital_id,
         },
         create: {
-          mac,
-          name,
-          display_name: displayName,
-          code,
-          connection,
-          label,
-          hospital_id,
-          type,
+          id: mac,
+          name: display_name,
+          device: device,
+          device_function: device_function,
+          connection: connection,
+          type: type,
+          hospital_id: hospital_id,
         },
       });
-
-      console.log("Device saved or updated");
     } catch (error) {
       throw error;
     }
-
     // payload to mqtt
     const payloadSend = {
       mac,
-      device_function: code,
+      device_function,
     };
 
     // sent to mqtt

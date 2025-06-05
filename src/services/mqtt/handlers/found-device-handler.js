@@ -3,11 +3,11 @@ import userMap from "../../user-map.js";
 
 export default class FoundDevicesHandler extends BaseHandler {
   get topic() {
-    return "IoTGateway/{ID-Unik}/Bluetooth/ScanRst";
+    return "iotgateway/{id-unik}/bluetooth/scan_result";
   }
 
   handle(topic, message) {
-    const userId = "UserTest1";
+    const userId = "UserTest";
 
     const socketId = userMap.get(userId);
 
@@ -15,8 +15,7 @@ export default class FoundDevicesHandler extends BaseHandler {
     const attemptData = {
       ...data,
       type: "measurement",
-      label: "device",
-      user_id: userId,
+      hospital_id: userId,
     };
 
     // const userId = data.userId;
