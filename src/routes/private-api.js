@@ -5,6 +5,7 @@ import patientController from "../controllers/patient-controller.js";
 import babyController from "../controllers/baby-controller.js";
 import measurementHistoriesController from "../controllers/measurement-histories-controller.js";
 import measurementHistoriesDigitProBabyController from "../controllers/digit-pro-baby-controller.js";
+import measurementHistoriesDigitProIdaController from "../controllers/digit-pro-ida-controller.js";
 import deviceController from "../controllers/device-controller.js";
 
 const privateRouter = new express.Router();
@@ -67,6 +68,12 @@ privateRouter.get(
   "/api/measurement-histories-digit-pro-baby",
   measurementHistoriesDigitProBabyController.getAll
 ); // Get All
+
+// Measuremetn Histories Digit Pro Ida
+privateRouter.post(
+  "/api/measurement-histories-digit-pro-ida",
+  measurementHistoriesDigitProIdaController.create
+); // Create
 
 // Device
 privateRouter.post("/api/devices/connect", deviceController.connect); // Connect device

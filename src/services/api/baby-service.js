@@ -31,4 +31,4 @@ export const createBabyService = async (data) => {
   } catch (error) {
     throw error;
   }
-}
+};

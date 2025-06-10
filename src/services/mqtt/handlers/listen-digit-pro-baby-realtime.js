@@ -17,6 +17,8 @@ export default class ListenDigitProIDA extends BaseHandler {
     const data = JSON.parse(message.toString());
     // const userId = data.userId;
 
+    console.log(data);
+
     // send data to websocket
     this.io
       .to(userId) // socket room
