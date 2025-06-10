@@ -3,7 +3,7 @@ import userMap from "../../user-map.js";
 
 export default class ListenDoppler extends BaseHandler {
   get topic() {
-    return "ble/doppler_data";
+    return "iotgateway/{id-unik}/bluetooth/ultrasonic_pocket_doppler_realtime";
   }
 
   handle(topic, message) {

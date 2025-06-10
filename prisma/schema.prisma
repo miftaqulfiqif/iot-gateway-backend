@@ -147,6 +147,7 @@ model PatientHandler {
 
   measurement_histories MeasurementHistories[]
   measuremnt_histories_digit_pro_baby MeasurementHistoriesDigitProBaby[]
+  measuremnt_histories_digit_pro_ida MeasurementHistoriesDigitProIda[]
 
   @@map("patient_handlers")
 }
@@ -183,6 +184,8 @@ model Baby {
   patient_id String
 
   patient Patient @relation(fields: [patient_id], references: [id])
+  measurement_histories_digit_pro_baby MeasurementHistoriesDigitProBaby[]
+  measurement_histories_digit_pro_ida MeasurementHistoriesDigitProIda[]
 
   @@map("babies")
 }
@@ -210,10 +213,30 @@ model MeasurementHistoriesDigitProBaby {
   timestamp DateTime @default(now())
 
   patient_handler_id String
+  baby_id String
 
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+  baby Baby @relation(fields: [baby_id], references: [id])
   
   @@map("measurement_histories_digit_pro_baby")
+}
+
+// Digit Pro Ida
+model MeasurementHistoriesDigitProIda {
+  id Int @id @default(autoincrement())
+  device_id String
+  name String
+  weight_mother Float
+  weight_child Float
+  timestamp DateTime @default(now())
+
+  patient_handler_id String
+  baby_id String
+
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+  baby Baby @relation(fields: [baby_id], references: [id])
+  
+  @@map("measurement_histories_digit_pro_ida")
 }
 
 //Activity

@@ -1,7 +1,9 @@
 import { prismaClient } from "../../applications/database.js";
 
+// create
 export const createService = async (user, dataMeasurement) => {
   try {
+    console.log(dataMeasurement);
     let patientHandler = null;
 
     // Check patient handler
@@ -15,7 +17,7 @@ export const createService = async (user, dataMeasurement) => {
 
     // Check if patient handler exist
     if (!patientHandler) {
-      //Create patient handler
+      // Create patient handler
       patientHandler = await prismaClient.patientHandler.create({
         data: {
           user_id: user.id,
@@ -25,7 +27,7 @@ export const createService = async (user, dataMeasurement) => {
       });
     }
 
-    // Get Device Name
+    // Get device name
     const deviceName = await prismaClient.deviceConnected.findFirst({
       where: {
         id: dataMeasurement.device_id,
@@ -35,8 +37,8 @@ export const createService = async (user, dataMeasurement) => {
       },
     });
 
-    //Create history
-    return await prismaClient.measurementHistoriesDigitProBaby.create({
+    // Create history
+    return await prismaClient.measurementHistoriesDigitProIda.create({
       data: {
         patient_handler_id: patientHandler.id,
         ...Object.keys(dataMeasurement).reduce((object, key) => {
@@ -48,14 +50,6 @@ export const createService = async (user, dataMeasurement) => {
         name: deviceName.name,
       },
     });
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const getAllService = async () => {
-  try {
-    return await prismaClient.measurementHistoriesDigitProBaby.findMany();
   } catch (error) {
     throw error;
   }
