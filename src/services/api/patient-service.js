@@ -188,6 +188,9 @@ export const updatePatientService = async (patientId, body) => {
     if (body.date_of_birth) {
       data.date_of_birth = body.date_of_birth;
     }
+    if (body.height) {
+      data.height = body.height;
+    }
 
     return prismaClient.patient.update({
       where: {
@@ -205,6 +208,7 @@ export const updatePatientService = async (patientId, body) => {
         last_education: true,
         place_of_birth: true,
         date_of_birth: true,
+        height: true,
       },
     });
   } catch (error) {

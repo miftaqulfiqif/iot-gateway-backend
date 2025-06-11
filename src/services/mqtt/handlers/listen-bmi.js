@@ -5,7 +5,7 @@ import { calculateHealthMetrics } from "../../../applications/generator/calculat
 
 export default class ListenBMI extends BaseHandler {
   get topic() {
-    return "ble/bmi_weights";
+    return "iotgateway/{id-unik}/bluetooth/digitpro_bmi_result";
   }
 
   handle(topic, message) {
@@ -16,14 +16,11 @@ export default class ListenBMI extends BaseHandler {
     // const data = JSON.parse(message.toString());
     // const userId = data.userId;
 
-    const raw = message.toString();
-    const data = parseDataBMI(raw);
-
-    const calcBMI = calculateHealthMetrics(data);
+    const data = JSON.parse(message.toString());
 
     console.log(`✅ Emitting to user ${userId}:`, {
-      data_bmi: [calcBMI],
+      data_bmi: [data],
     });
-    this.io.to(userId).emit("listen_bmi", { data_bmi: [calcBMI] });
+    this.io.to(userId).emit("listen_bmi", { data_bmi: [data] });
   }
 }

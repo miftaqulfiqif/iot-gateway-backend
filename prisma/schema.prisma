@@ -164,7 +164,7 @@ model Patient {
   place_of_birth String?
   date_of_birth String
   religion String?
-  weight Int?
+  height Int?
   age Int
 
   patient_handle PatientHandler[]
