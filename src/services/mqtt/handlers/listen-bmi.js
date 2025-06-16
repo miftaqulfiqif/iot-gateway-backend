@@ -3,9 +3,34 @@ import userMap from "../../user-map.js";
 import { parseDataBMI } from "../../../applications/generator/data_bmi.js";
 import { calculateHealthMetrics } from "../../../applications/generator/calculate-healt-metrics.js";
 
+const gateways = [
+  {
+    id: "{id-unik}",
+    name: "Gateway Test",
+  },
+  {
+    id: "test_1",
+    name: "Gateway 1",
+  },
+  {
+    id: "test_2",
+    name: "Gateway 2",
+  },
+  {
+    id: "test_3",
+    name: "Gateway 3",
+  },
+  {
+    id: "test_4",
+    name: "Gateway 4",
+  },
+];
+
 export default class ListenBMI extends BaseHandler {
-  get topic() {
-    return "iotgateway/{id-unik}/bluetooth/digitpro_bmi_result";
+  get topics() {
+    return gateways.map(
+      (gateway) => `iotgateway/${gateway.id}/bluetooth/digitpro_bmi_result`
+    );
   }
 
   handle(topic, message) {
