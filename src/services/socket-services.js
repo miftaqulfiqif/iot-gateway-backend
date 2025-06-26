@@ -11,14 +11,18 @@ import StopDoppler from "./socket/handlers/stop-doppler.js";
 import StartBMI from "./socket/handlers/start-bmi.js";
 import StartProIDA from "./socket/handlers/start-digit-pro-ida.js";
 import ScanHandler from "./socket/handlers/scan-handler.js";
+import ConnectDeviceTcpIpHandler from "./socket/handlers/connect-device-tcpip.js";
+import { setSocketIO } from "./socket/socket-instance.js";
 
 export function setupSocket(io) {
+  setSocketIO(io);
   const router = new SocketRouter(io);
 
   router.registerHandler(JoinRoomHandler);
   router.registerHandler(ScanHandler);
   router.registerHandler(DisconnectHandler);
   router.registerHandler(ConnectDeviceHandler);
+  router.registerHandler(ConnectDeviceTcpIpHandler);
   router.registerHandler(DeleteDeviceHandler);
 
   //DigitProIda

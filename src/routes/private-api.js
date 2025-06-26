@@ -76,7 +76,11 @@ privateRouter.post(
 ); // Create
 
 // Device
-privateRouter.post("/api/devices/connect", deviceController.connect); // Connect device
+privateRouter.post(
+  "/api/devices/connect-bluetooth",
+  deviceController.connectBluetooth
+); // Connect device
+privateRouter.post("/api/devices/connect-tcpip", deviceController.connectTcpIP); // Connect device tcp-ip
 privateRouter.get("/api/devices", deviceController.get); // Get all device connected
 privateRouter.delete(
   "/api/devices/disconnect/:mac",
