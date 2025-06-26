@@ -1,13 +1,25 @@
 import {
-  connectDevice,
+  connectDeviceBluetooth,
+  connectDeviceTcpIP,
   disconnectDevice,
   getDevices,
 } from "../services/api/device-service.js";
 
-const connect = async (req, res, next) => {
+const connectBluetooth = async (req, res, next) => {
   try {
     const device = req.body;
-    const deviceConnecting = await connectDevice(device);
+    const deviceConnecting = await connectDeviceBluetooth(device);
+    res
+      .status(200)
+      .json({ message: "Device connected", data: deviceConnecting });
+  } catch (error) {
+    next(error);
+  }
+};
+const connectTcpIP = async (req, res, next) => {
+  try {
+    const device = req.body;
+    const deviceConnecting = await connectDeviceTcpIP(device);
     res
       .status(200)
       .json({ message: "Device connected", data: deviceConnecting });
@@ -34,4 +46,4 @@ const get = async (req, res, next) => {
   }
 };
 
-export default { connect, disconnect, get };
+export default { connectBluetooth, connectTcpIP, disconnect, get };
