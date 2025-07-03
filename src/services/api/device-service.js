@@ -5,6 +5,10 @@ import { getSocketIO } from "../socket/socket-instance.js";
 import SocketRouter from "../socket/socket-router.js";
 
 export const connectDeviceBluetooth = async (device) => {
+  if (device.name === null || device.name === undefined || device.name === "") {
+    device.name = device.device;
+  }
+
   // Check if mac device exist
   const macDeviceFound = await prismaClient.deviceConnected.findUnique({
     where: {
