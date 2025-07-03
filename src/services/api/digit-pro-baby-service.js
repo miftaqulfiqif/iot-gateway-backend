@@ -1,9 +1,20 @@
 import { timeStamp } from "console";
 import { prismaClient } from "../../applications/database.js";
+import { ResponseError } from "../../errors/response-error.js";
 
 export const createService = async (user, dataMeasurement) => {
   try {
     let patientHandler = null;
+
+    // Check if device_id not found
+    const device = await prismaClient.deviceConnected.findFirst({
+      where: {
+        id: dataMeasurement.device_id,
+      },
+    });
+    if (!device) {
+      throw new ResponseError(401, "Device not found");
+    }
 
     // Check patient handler
     patientHandler = await prismaClient.patientHandler.findFirst({

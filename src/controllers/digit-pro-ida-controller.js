@@ -16,11 +16,20 @@ const create = async (req, res, next) => {
 };
 
 const getAll = async (req, res, next) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const query = req.query.query || "";
+
   try {
-    const result = await getAllService();
-    res
-      .status(200)
-      .json({ message: "Success getting digit pro idas", data: result });
+    const result = await getAllService(query, page, limit, skip);
+    res.status(200).json({
+      message: "Success getting digit pro idas",
+      current_page: page,
+      total_items: result.total,
+      total_pages: Math.ceil(result.total / limit),
+      data: result.data,
+    });
   } catch (error) {
     next(error);
   }
