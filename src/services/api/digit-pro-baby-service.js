@@ -1,3 +1,4 @@
+import { timeStamp } from "console";
 import { prismaClient } from "../../applications/database.js";
 
 export const createService = async (user, dataMeasurement) => {
@@ -55,7 +56,79 @@ export const createService = async (user, dataMeasurement) => {
 
 export const getAllService = async () => {
   try {
-    return await prismaClient.measurementHistoriesDigitProBaby.findMany();
+    return await prismaClient.measurementHistoriesDigitProBaby.findMany({
+      select: {
+        id: true,
+        device_id: true,
+        name: true,
+        weight: true,
+        timestamp: true,
+        patient_handler: {
+          select: {
+            id: true,
+            patient: {
+              select: {
+                id: true,
+                name: true,
+                gender: true,
+                phone: true,
+                work: true,
+                last_education: true,
+                place_of_birth: true,
+                date_of_birth: true,
+                age: true,
+              },
+            },
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getByPatientIdService = async (patientId) => {
+  try {
+    return await prismaClient.measurementHistoriesDigitProBaby.findMany({
+      where: {
+        patient_handler: {
+          patient_id: patientId,
+        },
+      },
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getByDeviceIdService = async (deviceId) => {
+  try {
+    return await prismaClient.measurementHistoriesDigitProBaby.findMany({
+      where: {
+        device_id: deviceId,
+      },
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getByUserIdService = async (userId) => {
+  try {
+    return await prismaClient.measurementHistoriesDigitProBaby.findMany({
+      where: {
+        patient_handler: {
+          user_id: userId,
+        },
+      },
+    });
   } catch (error) {
     throw error;
   }

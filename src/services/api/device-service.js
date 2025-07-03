@@ -33,7 +33,7 @@ export const connectDeviceBluetooth = async (device) => {
   mqttClient.publish(
     "iotgateway/{id-unik}/bluetooth/add_device",
     JSON.stringify({
-      ip: device.id,
+      mac: device.id,
       device_function: device.device_function,
     }),
     (err) => {
@@ -104,10 +104,45 @@ export const connectDeviceTcpIP = async (device) => {
 
   return deviceConnecting;
 };
-export const disconnectDevice = async (macDevice) => {
+export const disconnectDeviceBluetooth = async (macDevice) => {
   // Check if mac device exist
   const device = await prismaClient.deviceConnected.findUnique({
     where: { id: macDevice },
+  });
+
+  if (!device) {
+    throw new ResponseError(402, "Mac Device not found");
+  }
+
+  // Publish MQTT
+  await new Promise((resolve, reject) => {
+    mqttClient.publish(
+      `iotgateway/{id-unik}/bluetooth/remove_device`,
+      JSON.stringify({
+        mac: device.id,
+      }),
+      (err) => {
+        if (err) {
+          console.error("❌ MQTT publish error:", err);
+          return reject(new ResponseError(500, "Failed to send MQTT command"));
+        }
+        resolve();
+      }
+    );
+  });
+
+  // Delete Database
+  const removedDevice = await prismaClient.deviceConnected.delete({
+    where: { id: macDevice },
+  });
+
+  return removedDevice;
+};
+
+export const disconnectDeviceTcpIP = async (ipDevice) => {
+  // Check if mac device exist
+  const device = await prismaClient.deviceConnected.findUnique({
+    where: { id: ipDevice },
   });
 
   if (!device) {
@@ -134,7 +169,7 @@ export const disconnectDevice = async (macDevice) => {
 
   // Delete Database
   const removedDevice = await prismaClient.deviceConnected.delete({
-    where: { id: macDevice },
+    where: { id: ipDevice },
   });
 
   return removedDevice;
