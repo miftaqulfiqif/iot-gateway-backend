@@ -68,12 +68,40 @@ privateRouter.get(
   "/api/measurement-histories-digit-pro-baby",
   measurementHistoriesDigitProBabyController.getAll
 ); // Get All
+privateRouter.get(
+  "/api/measurement-histories-digit-pro-baby/patient/:patient_id",
+  measurementHistoriesDigitProBabyController.getByPatientId
+); // Get by patient id
+privateRouter.get(
+  "/api/measurement-histories-digit-pro-baby/device/:device_id",
+  measurementHistoriesDigitProBabyController.getByDeviceId
+); // Get by device id
+privateRouter.get(
+  "/api/measurement-histories-digit-pro-baby/user/:user_id",
+  measurementHistoriesDigitProBabyController.getByUserId
+); // Get by user id
 
 // Measuremetn Histories Digit Pro Ida
 privateRouter.post(
   "/api/measurement-histories-digit-pro-ida",
   measurementHistoriesDigitProIdaController.create
 ); // Create
+privateRouter.get(
+  "/api/measurement-histories-digit-pro-ida",
+  measurementHistoriesDigitProIdaController.getAll
+); // Get All
+privateRouter.get(
+  "/api/measurement-histories-digit-pro-ida/patient/:patient_id",
+  measurementHistoriesDigitProIdaController.getByPatientId
+); // Get By Patient Id
+privateRouter.get(
+  "/api/measurement-histories-digit-pro-ida/device/:device_id",
+  measurementHistoriesDigitProIdaController.getByDeviceId
+); // Get By Device Id
+privateRouter.get(
+  "/api/measurement-histories-digit-pro-ida/user/:user_id",
+  measurementHistoriesDigitProIdaController.getByUserId
+); // Get By User Id
 
 // Device
 privateRouter.post(
@@ -83,8 +111,12 @@ privateRouter.post(
 privateRouter.post("/api/devices/connect-tcpip", deviceController.connectTcpIP); // Connect device tcp-ip
 privateRouter.get("/api/devices", deviceController.get); // Get all device connected
 privateRouter.delete(
-  "/api/devices/disconnect/:mac",
-  deviceController.disconnect
+  "/api/devices/disconnect-ble/:mac",
+  deviceController.disconnectBluetooth
+); // Disconnect device
+privateRouter.delete(
+  "/api/devices/disconnect-tcpip/:ip",
+  deviceController.disconnectTcpIP
 ); // Disconnect device
 
 export { privateRouter };
