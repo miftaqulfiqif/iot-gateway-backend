@@ -1,6 +1,5 @@
 import {prismaClient} from "../../applications/database.js";
 import {ResponseError} from "../../errors/response-error.js";
-import * as sea from "node:sea";
 
 export const createService = async (user, dataMeasurement) => {
 
