@@ -20,11 +20,13 @@ const getAll = async (req, res, next) => {
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
   const query = req.query.query || "";
+  const patient_id = req.query.patient_id || null;
 
   try {
-    const result = await getAllService(query, page, limit, skip);
+    const result = await getAllService(query, page, limit, skip, patient_id);
     res.status(200).json({
       message: "Success getting digit pro idas",
+      patient_id : patient_id,
       current_page: page,
       total_items: result.total,
       total_pages: Math.ceil(result.total / limit),

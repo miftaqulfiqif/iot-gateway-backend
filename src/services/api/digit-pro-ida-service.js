@@ -65,26 +65,40 @@ export const createService = async (user, dataMeasurement) => {
   }
 };
 
-export const getAllService = async (query, page, limit, skip) => {
+export const getAllService = async (query, page, limit, skip, patient_id) => {
   try {
-    const searchCondition = query
-      ? {
-          name: {
-            contains: query,
-            mode: "insensitive",
-          },
-        }
-      : {};
+    const whereCondition = {};
 
-    const whereCondition = {
-      ...searchCondition,
-      patient_handler: {
-        is: {
-          patient: {},
-          
+    if (query) {
+      whereCondition.OR = [
+          {
+            name: {
+              contains: query,
+              mode: "insensitive",
+            }
+          },
+          {
+            patient_handler: {
+              patient: {
+                name: {
+                  contains: query,
+                  mode: "insensitive",
+                }
+              }
+            }
+          }
+        ];
+      }
+
+    if (patient_id) {
+      whereCondition.patient_handler = {
+        ...(whereCondition.patient_handler || {}),
+        patient: {
+          ...(whereCondition.patient_handler?.patient || {}),
+          id: patient_id,
         },
-      },
-    };
+      };
+    }
 
     const total = await prismaClient.measurementHistoriesDigitProIda.count({
       where: whereCondition,
