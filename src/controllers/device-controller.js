@@ -1,13 +1,15 @@
 import {
-  connectDevice,
-  disconnectDevice,
+  connectDeviceBluetooth,
+  connectDeviceTcpIP,
+  disconnectDeviceBluetooth,
+  disconnectDeviceTcpIP,
   getDevices,
 } from "../services/api/device-service.js";
 
-const connect = async (req, res, next) => {
+const connectBluetooth = async (req, res, next) => {
   try {
     const device = req.body;
-    const deviceConnecting = await connectDevice(device);
+    const deviceConnecting = await connectDeviceBluetooth(device);
     res
       .status(200)
       .json({ message: "Device connected", data: deviceConnecting });
@@ -15,9 +17,30 @@ const connect = async (req, res, next) => {
     next(error);
   }
 };
-const disconnect = async (req, res, next) => {
+const connectTcpIP = async (req, res, next) => {
   try {
-    const deviceDisconnecting = await disconnectDevice(req.params.mac);
+    const device = req.body;
+    const deviceConnecting = await connectDeviceTcpIP(device);
+    res
+      .status(200)
+      .json({ message: "Device connected", data: deviceConnecting });
+  } catch (error) {
+    next(error);
+  }
+};
+const disconnectBluetooth = async (req, res, next) => {
+  try {
+    const deviceDisconnecting = await disconnectDeviceBluetooth(req.params.mac);
+    res
+      .status(200)
+      .json({ message: "Device disconnected", data: deviceDisconnecting });
+  } catch (error) {
+    next(error);
+  }
+};
+const disconnectTcpIP = async (req, res, next) => {
+  try {
+    const deviceDisconnecting = await disconnectDeviceTcpIP(req.params.ip);
     res
       .status(200)
       .json({ message: "Device disconnected", data: deviceDisconnecting });
@@ -34,4 +57,10 @@ const get = async (req, res, next) => {
   }
 };
 
-export default { connect, disconnect, get };
+export default {
+  connectBluetooth,
+  connectTcpIP,
+  disconnectBluetooth,
+  disconnectTcpIP,
+  get,
+};

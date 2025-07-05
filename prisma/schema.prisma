@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "windows"]
 }
 
@@ -15,83 +15,83 @@ datasource db {
 }
 
 model Hospital {
-  id String @id @default(uuid())
-  name String @db.VarChar(255)
+  id        String  @id @default(uuid())
+  name      String  @db.VarChar(255)
   logo_path String?
 
-  user User[]
+  user              User[]
   devices_connected DeviceConnected[]
-  patient_handlers PatientHandler[]
-  iot_gateway IotGateway[]
+  patient_handlers  PatientHandler[]
+  iot_gateway       IotGateway[]
 
   @@map("hospitals")
 }
 
 model User {
-  id String @id @default(uuid())
-  username String @unique 
-  password String
-  token String? 
+  id        String  @id @default(uuid())
+  username  String  @unique
+  password  String
+  token     String?
   is_active Boolean
-  
-  role_id Int
+
+  role_id     Int
   hospital_id String
 
   hospital Hospital @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
-  role Role @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  role     Role     @relation(fields: [role_id], references: [id], onDelete: Cascade)
 
-  admin    Admin?   @relation("UserAdmin")
-  doctor   Doctor?  @relation("UserDoctor")
-  nurse    Nurse?   @relation("UserNurse")
-   
-  patient_handle PatientHandler[]
-  activity_log ActivityLogs[]
+  admin  Admin?  @relation("UserAdmin")
+  doctor Doctor? @relation("UserDoctor")
+  nurse  Nurse?  @relation("UserNurse")
+
+  patient_handle  PatientHandler[]
+  activity_log    ActivityLogs[]
   profile_picture ProfilePicture?
 
   @@map("users")
 }
 
 model Role {
-  id Int @id @default(autoincrement())
+  id   Int    @id @default(autoincrement())
   name String @unique
   kode String
-  
+
   user User[]
 
   @@map("roles")
 }
 
-model Admin{
-  name String 
+model Admin {
+  name String
 
   user_id String @id
-  
-  user   User     @relation("UserAdmin", fields: [user_id], references: [id])
+
+  user User @relation("UserAdmin", fields: [user_id], references: [id])
 
   doctor Doctor[]
-  nurse Nurse[]
+  nurse  Nurse[]
 
   @@map("admins")
 }
 
-model Doctor{
-  name String 
+model Doctor {
+  name String
 
-  user_id String @id @unique
+  user_id  String @id @unique
   admin_id String
-  
+
   user  User  @relation("UserDoctor", fields: [user_id], references: [id])
   admin Admin @relation(fields: [admin_id], references: [user_id])
 
   @@map("doctors")
 }
 
-model Nurse{
-  name String 
+model Nurse {
+  name String
 
-  user_id String @id @unique
+  user_id  String @id @unique
   admin_id String
-  
+
   user  User  @relation("UserNurse", fields: [user_id], references: [id])
   admin Admin @relation(fields: [admin_id], references: [user_id])
 
@@ -99,9 +99,9 @@ model Nurse{
 }
 
 model ProfilePicture {
-  id Int @id @default(autoincrement())
+  id   Int    @id @default(autoincrement())
   path String
-  
+
   user_id String @unique
 
   user User @relation(fields: [user_id], references: [id])
@@ -110,12 +110,12 @@ model ProfilePicture {
 }
 
 model DeviceConnected {
-  id String @id @unique
-  device String @db.VarChar(255)
+  id              String  @id @unique
+  device          String  @db.VarChar(255)
   device_function String
-  type String? @db.VarChar(255)
-  connection String
-  name String? @db.VarChar(255)
+  type            String? @db.VarChar(255)
+  connection      String
+  name            String? @db.VarChar(255)
 
   hospital_id String
 
@@ -125,7 +125,7 @@ model DeviceConnected {
 }
 
 model IotGateway {
-  id String @id @default(uuid())
+  id   String @id @default(uuid())
   name String
 
   hospital_id String
@@ -136,39 +136,40 @@ model IotGateway {
 }
 
 model PatientHandler {
-  id String @id @default(uuid())
-  user_id String
-  patient_id String
+  id          String @id @default(uuid())
+  user_id     String
+  patient_id  String
   hospital_id String
 
-  user User @relation(fields: [user_id], references: [id])
-  patient Patient @relation(fields: [patient_id], references: [id])
+  user     User     @relation(fields: [user_id], references: [id])
+  patient  Patient  @relation(fields: [patient_id], references: [id])
   hospital Hospital @relation(fields: [hospital_id], references: [id])
 
-  measurement_histories MeasurementHistories[]
+  measurement_histories               MeasurementHistories[]
   measuremnt_histories_digit_pro_baby MeasurementHistoriesDigitProBaby[]
-  measuremnt_histories_digit_pro_ida MeasurementHistoriesDigitProIda[]
+  measuremnt_histories_digit_pro_ida  MeasurementHistoriesDigitProIda[]
+  MeasurementHistoriesDigitProBMI     MeasurementHistoriesDigitProBMI[]
 
   @@map("patient_handlers")
 }
 
 model Patient {
-  id String @id @default(uuid())
-  barcode_img String @db.LongText
-  name String @db.VarChar(255)
-  gender String @db.VarChar(255)
-  address String? @db.LongText
-  phone String?
-  work String?
+  id             String  @id @default(uuid())
+  barcode_img    String  @db.LongText
+  name           String  @db.VarChar(255)
+  gender         String  @db.VarChar(255)
+  address        String? @db.LongText
+  phone          String?
+  work           String?
   last_education String?
   place_of_birth String?
-  date_of_birth String
-  religion String?
-  height Int?
-  age Int
+  date_of_birth  String
+  religion       String?
+  height         Int?
+  age            Int
 
   patient_handle PatientHandler[]
-  babies Baby[]
+  babies         Baby[]
 
   @@map("patients")
 }
@@ -176,25 +177,25 @@ model Patient {
 model Baby {
   id String @id @default(uuid())
 
-  name String
-  gender String
-  date_of_birth String
+  name           String
+  gender         String
+  date_of_birth  String
   place_of_birth String?
 
   patient_id String
 
-  patient Patient @relation(fields: [patient_id], references: [id])
+  patient                              Patient                            @relation(fields: [patient_id], references: [id])
   measurement_histories_digit_pro_baby MeasurementHistoriesDigitProBaby[]
-  measurement_histories_digit_pro_ida MeasurementHistoriesDigitProIda[]
+  measurement_histories_digit_pro_ida  MeasurementHistoriesDigitProIda[]
 
   @@map("babies")
 }
 
-model MeasurementHistories{
-  id String @id @default(uuid())
+model MeasurementHistories {
+  id        String   @id @default(uuid())
   device_id String
-  device String
-  data Json
+  device    String
+  data      Json
   timestamp DateTime @default(now())
 
   patient_handler_id String
@@ -206,49 +207,75 @@ model MeasurementHistories{
 
 // Digit Pro Baby
 model MeasurementHistoriesDigitProBaby {
-  id Int @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   device_id String
-  name String
-  weight Float
+  name      String
+  weight    Float
   timestamp DateTime @default(now())
 
   patient_handler_id String
-  baby_id String
+  baby_id            String
 
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
-  baby Baby @relation(fields: [baby_id], references: [id])
-  
+  baby            Baby           @relation(fields: [baby_id], references: [id])
+
   @@map("measurement_histories_digit_pro_baby")
 }
 
 // Digit Pro Ida
 model MeasurementHistoriesDigitProIda {
-  id Int @id @default(autoincrement())
-  device_id String
-  name String
+  id            Int      @id @default(autoincrement())
+  device_id     String
+  name          String
   weight_mother Float
-  weight_child Float
-  timestamp DateTime @default(now())
+  weight_child  Float
+  timestamp     DateTime @default(now())
 
   patient_handler_id String
-  baby_id String
+  baby_id            String
 
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
-  baby Baby @relation(fields: [baby_id], references: [id])
-  
+  baby            Baby           @relation(fields: [baby_id], references: [id])
+
   @@map("measurement_histories_digit_pro_ida")
 }
 
+model MeasurementHistoriesDigitProBMI {
+  id           Int      @id @default(autoincrement())
+  device_id    String
+  name         String
+  weight       Int
+  age          Int
+  bmi          Int
+  body_fat     Int
+  muscle_mass  Int
+  water        Int
+  visceral_fat Int
+  bone_mass    Int
+  metabolism   Int
+  protein      Int
+  obesity      Int
+  body_age     Int
+  lbm          Int
+  timestamp    DateTime @default(now())
+
+  patient_handler_id String
+
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+
+  @@map("measurement_histories_digit_pro_bmi")
+}
+
 //Activity
-model ActivityLogs{
-  id String @id @default(uuid())
-  action String
-  description String @db.Text
+model ActivityLogs {
+  id           String   @id @default(uuid())
+  action       String
+  description  String   @db.Text
   target_table String
-  target_id String?
-  ip_address String?
-  user_agent String?
-  timestamp DateTime @default(now())
+  target_id    String?
+  ip_address   String?
+  user_agent   String?
+  timestamp    DateTime @default(now())
 
   user_id String
 
