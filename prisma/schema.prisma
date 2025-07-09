@@ -142,7 +142,7 @@ model PatientHandler {
   hospital_id String
 
   user     User     @relation(fields: [user_id], references: [id])
-  patient  Patient  @relation(fields: [patient_id], references: [id])
+  patient  Patient  @relation(fields: [patient_id], references: [id], onDelete: Cascade)
   hospital Hospital @relation(fields: [hospital_id], references: [id])
 
   measurement_histories               MeasurementHistories[]
@@ -155,6 +155,7 @@ model PatientHandler {
 
 model Patient {
   id             String  @id @default(uuid())
+  nik            String  @unique @default(cuid())
   barcode_img    String  @db.LongText
   name           String  @db.VarChar(255)
   gender         String  @db.VarChar(255)
@@ -168,7 +169,7 @@ model Patient {
   height         Int?
   age            Int
 
-  patient_handle PatientHandler[]
+  patient_handle PatientHandler[] 
   babies         Baby[]
 
   @@map("patients")
