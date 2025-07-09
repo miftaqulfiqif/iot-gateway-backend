@@ -6,6 +6,13 @@ import { ResponseError } from "../../errors/response-error.js";
 // Create new patient
 export const createPatient = async (user, patient) => {
   try {
+    const nikFound = await prismaClient.patient.findUnique({
+      where: { nik: patient.nik },
+    });
+    if (nikFound) {
+      throw new ResponseError(400, "NIK already exist");
+    }
+
     // Generate age
     const age = generateAge(patient.date_of_birth);
 
