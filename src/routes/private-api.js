@@ -7,6 +7,7 @@ import measurementHistoriesController from "../controllers/measurement-histories
 import measurementHistoriesDigitProBabyController from "../controllers/digit-pro-baby-controller.js";
 import measurementHistoriesDigitProIdaController from "../controllers/digit-pro-ida-controller.js";
 import measurementHistoriesDigitProBmiController from "../controllers/digit-pro-bmi-controller.js";
+import measurementHistoriesDoppler from "../controllers/doppler-controller.js";
 import deviceController from "../controllers/device-controller.js";
 
 const privateRouter = new express.Router();
@@ -113,6 +114,10 @@ privateRouter.get(
     "/api/measurement-histories-digit-pro-bmi",
     measurementHistoriesDigitProBmiController.getAll
 )
+
+// Measurement Histories Doppler
+privateRouter.post("/api/measurement-histories-doppler", measurementHistoriesDoppler.create )
+privateRouter.get("/api/measurement-histories-doppler", measurementHistoriesDoppler.getAll )
 
 // Device
 privateRouter.post(

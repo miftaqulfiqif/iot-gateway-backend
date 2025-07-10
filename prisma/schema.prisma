@@ -149,6 +149,7 @@ model PatientHandler {
   measuremnt_histories_digit_pro_baby MeasurementHistoriesDigitProBaby[]
   measuremnt_histories_digit_pro_ida  MeasurementHistoriesDigitProIda[]
   MeasurementHistoriesDigitProBMI     MeasurementHistoriesDigitProBMI[]
+  MeasurementHistoriesDoppler         MeasurementHistoriesDoppler[]
 
   @@map("patient_handlers")
 }
@@ -169,7 +170,7 @@ model Patient {
   height         Int?
   age            Int
 
-  patient_handle PatientHandler[] 
+  patient_handle PatientHandler[]
   babies         Baby[]
 
   @@map("patients")
@@ -241,6 +242,22 @@ model MeasurementHistoriesDigitProIda {
   @@map("measurement_histories_digit_pro_ida")
 }
 
+// Doppler
+model MeasurementHistoriesDoppler {
+  id         Int      @id @default(autoincrement())
+  device_id  String
+  name       String
+  heart_rate Int
+  timestamp  DateTime @default(now())
+
+  patient_handler_id String
+
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+
+  @@map("measurement-histories_doppler")
+}
+
+// Digit Pro BMI
 model MeasurementHistoriesDigitProBMI {
   id           Int      @id @default(autoincrement())
   device_id    String

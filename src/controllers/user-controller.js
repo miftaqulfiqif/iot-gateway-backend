@@ -39,7 +39,7 @@ const login = async (req, res, next) => {
     res.cookie("token", result.token, {
       httpOnly: true,
       secure: false,
-      sameSite: "lax",
+      sameSite: "Lax",
     });
 
     const { token, ...userWithoutToken } = result;
