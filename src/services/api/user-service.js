@@ -95,16 +95,15 @@ export const currentUserService = async (username) => {
     if (!user) {
       throw new ResponseError(404, "User not found");
     }
-
     // Get role
-    const roleName = user.role?.name ?? "";
+    const roleCode = user.role?.kode ?? "";
     // Get name by role
     let name = "";
-    if (roleName === "admin") {
+    if (roleCode === "ADM") {
       name = user.admin?.name ?? "";
-    } else if (roleName === "doctor") {
+    } else if (roleCode === "DOC") {
       name = user.doctor?.name ?? "";
-    } else if (roleName === "nurse") {
+    } else if (roleCode === "NUR") {
       name = user.nurse?.name ?? "";
     }
 
