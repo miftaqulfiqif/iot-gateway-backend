@@ -29,9 +29,13 @@ model Hospital {
 
 model User {
   id        String  @id @default(uuid())
+  email     String?  
   username  String  @unique
   password  String
+  phone     String?
   token     String?
+  created_at DateTime?
+  updated_at DateTime @default(now())
   is_active Boolean
 
   role_id     Int
@@ -76,6 +80,7 @@ model Admin {
 
 model Doctor {
   name String
+  specialty String
 
   user_id  String @id @unique
   admin_id String
