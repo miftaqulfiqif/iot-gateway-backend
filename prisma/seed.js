@@ -5,9 +5,9 @@ async function main() {
   // 1. Create roles
   const roles = await prisma.role.createMany({
     data: [
-      { id: 1, name: "Admin", kode: "ADM" },
-      { id: 2, name: "Doctor", kode: "DOC" },
-      { id: 3, name: "Nurse", kode: "NRS" },
+      { id: 1, name: "admin", kode: "ADM" },
+      { id: 2, name: "doctor", kode: "DOC" },
+      { id: 3, name: "nurse", kode: "NUR" },
     ],
     skipDuplicates: true,
   });

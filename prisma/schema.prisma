@@ -34,7 +34,7 @@ model User {
   password  String
   phone     String?
   token     String?
-  created_at DateTime?
+  created_at DateTime? @default(now())
   updated_at DateTime @default(now())
   is_active Boolean
 
@@ -145,6 +145,7 @@ model PatientHandler {
   user_id     String
   patient_id  String
   hospital_id String
+  timestamp   DateTime @default(now())
 
   user     User     @relation(fields: [user_id], references: [id])
   patient  Patient  @relation(fields: [patient_id], references: [id], onDelete: Cascade)

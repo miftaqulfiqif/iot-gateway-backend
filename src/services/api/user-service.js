@@ -80,7 +80,7 @@ export const currentUserService = async (username) => {
   try {
     const user = await prismaClient.user.findUnique({
       where: {
-        username: username,
+        username,
       },
       include: {
         role: true,
@@ -97,21 +97,23 @@ export const currentUserService = async (username) => {
     }
     // Get role
     const roleCode = user.role?.kode ?? "";
+    const roleName = user.role?.name ?? "";
+
     // Get name by role
-    let name = "";
-    if (roleCode === "ADM") {
-      name = user.admin?.name ?? "";
-    } else if (roleCode === "DOC") {
-      name = user.doctor?.name ?? "";
-    } else if (roleCode === "NUR") {
-      name = user.nurse?.name ?? "";
-    }
+    const name =
+      roleCode === "ADM"
+        ? user.admin?.name
+        : roleCode === "DOC"
+        ? user.doctor?.name
+        : roleCode === "NUR"
+        ? user.nurse?.name
+        : "";
 
     return {
-      name: name,
+      name: name ?? "",
       username: user.username,
+      role: roleName,
       profile_picture: user.profile_picture?.path ?? "",
-      role: user.role?.name ?? "",
       hospital: user.hospital
         ? {
             id: user.hospital.id,
@@ -256,5 +258,115 @@ export const loginService = async (request) => {
     };
   } catch (e) {
     throw e;
+  }
+};
+
+export const getUsersService = async () => {
+  try {
+    const users = await prismaClient.user.findMany({
+      include: {
+        role: true,
+        hospital: true,
+        admin: true,
+        doctor: true,
+        nurse: true,
+        profile_picture: true,
+      },
+    });
+
+    const result = users.map((user) => {
+      const roleCode = user.role?.kode ?? "";
+      const roleName = user.role?.name ?? "";
+
+      const name =
+        roleCode === "ADM"
+          ? user.admin?.name
+          : roleCode === "DOC"
+          ? user.doctor?.name
+          : roleCode === "NUR"
+          ? user.nurse?.name
+          : "";
+
+      return {
+        name: name ?? "",
+        email: user.email,
+        phone: user.phone,
+        username: user.username,
+        role: roleName,
+        created_at: user.created_at,
+      };
+    });
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getUserByUsernameService = async (username) => {
+  try {
+    const user = await prismaClient.user.findFirst({
+      where: { username },
+      include: {
+        role: true,
+        hospital: true,
+        admin: true,
+        doctor: true,
+        nurse: true,
+        profile_picture: true,
+      },
+    });
+
+    if (!user) {
+      throw new ResponseError(404, "User not found");
+    }
+
+    const roleCode = user.role?.id ?? "";
+    const roleName = user.role?.name ?? "";
+
+    const roleDataMap = {
+      1: user.admin,
+      2: user.doctor,
+      3: user.nurse,
+    };
+
+    const roleData = roleDataMap[roleCode] ?? {};
+
+    const recentPatient = await prismaClient.patientHandler.findMany({
+      where: {
+        user_id: user.id,
+      },
+      orderBy: {
+        timestamp: "desc",
+      },
+      select: {
+        patient: {
+          select: {
+            name: true,
+          },
+        },
+        timestamp: true,
+      },
+      take: 10,
+    });
+
+    return {
+      id: user.id,
+      name: roleData.name ?? "",
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      role: roleName,
+      place_of_birth: roleData.place_of_birth ?? "",
+      date_of_birth: roleData.date_of_birth ?? "",
+      address: roleData.address ?? "",
+      profile_picture: user.profile_picture?.path ?? "",
+      recent_patient: recentPatient.map((item) => ({
+        patient_name: item.patient?.name ?? "",
+        timestamp: item.timestamp,
+      })),
+    };
+  } catch (error) {
+    throw error;
   }
 };

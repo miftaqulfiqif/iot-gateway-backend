@@ -3,6 +3,8 @@ import {
   loginService,
   logOutService,
   registerService,
+  getUsersService,
+  getUserByUsernameService,
 } from "../services/api/user-service.js";
 
 const register = async (req, res, next) => {
@@ -49,4 +51,29 @@ const login = async (req, res, next) => {
   }
 };
 
-export default { register, currentUser, logout, login };
+const getUsers = async (req, res, next) => {
+  try {
+    const result = await getUsersService();
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getUserByUsername = async (req, res, next) => {
+  try {
+    const result = await getUserByUsernameService(req.params.username);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export default {
+  register,
+  currentUser,
+  logout,
+  login,
+  getUsers,
+  getUserByUsername,
+};
