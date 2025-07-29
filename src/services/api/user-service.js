@@ -332,7 +332,7 @@ export const getUserByUsernameService = async (username) => {
 
     const roleData = roleDataMap[roleCode] ?? {};
 
-    const recentPatient = await prismaClient.patientHandler.findMany({
+    const allRecentHandlers = await prismaClient.patientHandler.findMany({
       where: {
         user_id: user.id,
       },
@@ -340,6 +340,8 @@ export const getUserByUsernameService = async (username) => {
         timestamp: "desc",
       },
       select: {
+        id: true,
+        patient_id: true,
         patient: {
           select: {
             name: true,
@@ -347,8 +349,18 @@ export const getUserByUsernameService = async (username) => {
         },
         timestamp: true,
       },
-      take: 10,
     });
+
+    const uniquePatients = new Map();
+
+    // Filter only patient_id unique
+    for (const handler of allRecentHandlers) {
+      if (!uniquePatients.has(handler.patient_id)) {
+        uniquePatients.set(handler.patient_id, handler);
+      }
+    }
+
+    const recentPatient = Array.from(uniquePatients.values()).slice(0, 10);
 
     return {
       id: user.id,
@@ -361,7 +373,8 @@ export const getUserByUsernameService = async (username) => {
       date_of_birth: roleData.date_of_birth ?? "",
       address: roleData.address ?? "",
       profile_picture: user.profile_picture?.path ?? "",
-      recent_patient: recentPatient.map((item) => ({
+      recent_patients: recentPatient.map((item) => ({
+        id: item.id,
         patient_name: item.patient?.name ?? "",
         timestamp: item.timestamp,
       })),
