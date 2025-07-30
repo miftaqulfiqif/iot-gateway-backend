@@ -33,7 +33,7 @@ async function main() {
         username: "admin",
         email: "admin@example.com",
         password:
-          "$2b$10$iX3N5ObzDumHSAQuAfxYUOgwuJr8z.F3.H3jxaJmTIw0Z/cVisqBm",
+          "$2b$10$iX3N5ObzDumHSAQuAfxYUOgwuJr8z.F3.H3jxaJmTIw0Z/cVisqBm", // password: 123456
         phone: "08123456789",
         is_active: true,
         hospital_id: hospital.id,
