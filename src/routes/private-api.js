@@ -9,11 +9,13 @@ import measurementHistoriesDigitProIdaController from "../controllers/digit-pro-
 import measurementHistoriesDigitProBmiController from "../controllers/digit-pro-bmi-controller.js";
 import measurementHistoriesDoppler from "../controllers/doppler-controller.js";
 import deviceController from "../controllers/device-controller.js";
+import {publicRouter} from "./public-api.js";
 
 const privateRouter = new express.Router();
 privateRouter.use(authMiddleware);
 
 // User
+privateRouter.post("/api/users", userController.create); // Register user
 privateRouter.get("/api/user-current", userController.currentUser); // Get current user
 privateRouter.post("/api/user-logout", userController.logout); // Logout
 privateRouter.get("/api/users", userController.getUsers); // Get All Users

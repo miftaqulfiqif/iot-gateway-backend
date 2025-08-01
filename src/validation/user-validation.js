@@ -1,11 +1,10 @@
 import Joi from "joi";
 
 export const registerValidation = Joi.object({
-  hospital_name: Joi.string().max(255),
   name: Joi.string().max(255).required(),
   username: Joi.string().max(100).required(),
   password: Joi.string().max(20).required(),
-  token: Joi.string().max(100),
+  role_id: Joi.string().required(),
 });
 
 export const createUserValidation = Joi.object({

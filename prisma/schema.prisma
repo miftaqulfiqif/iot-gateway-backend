@@ -200,9 +200,8 @@ model PatientHandler {
   measurement_histories_doppler        MeasurementHistoriesDoppler[]
   central_monitor                      CentralMonitor[]
   measurement_histories_pm9000         MeasurementHistoriesPM9000[]
-  measurement_histories_pm9000_nibp    MeasurementHistoriesPM9000Nibp[]
-  MeasurementHistoriesDS001            MeasurementHistoriesDS001[]
-  MeasurementHistoriesDS001Nibp        MeasurementHistoriesDS001Nibp[]
+  measurement_histories_ds001          MeasurementHistoriesDS001[]
+  ecg_1200g                            Ecg1200g?
 
   @@map("patient_handlers")
 }
@@ -395,30 +394,16 @@ model MeasurementHistoriesPM9000 {
   temp1       Float    @db.Float
   temp2       Float    @db.Float
   delta_temp  Float    @db.Float
+  systolic    Float?   @db.Float
+  diastolic   Float?   @db.Float
+  mean        Float?   @db.Float
   recorded_at DateTime @default(now())
 
   patient_handler_id String
 
-  patient_handler                   PatientHandler                  @relation(fields: [patient_handler_id], references: [id])
-  measurement_histories_pm9000_nibp MeasurementHistoriesPM9000Nibp?
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
 
   @@map("measurement_histories_pm9000")
-}
-
-model MeasurementHistoriesPM9000Nibp {
-  id          String   @id @default(uuid())
-  systolic    Float    @db.Float
-  diastolic   Float    @db.Float
-  mean        Float    @db.Float
-  recorded_at DateTime @default(now())
-
-  pm9000_id          String? @unique
-  patient_handler_id String
-
-  patient_handler              PatientHandler              @relation(fields: [patient_handler_id], references: [id])
-  measurement_histories_pm9000 MeasurementHistoriesPM9000? @relation(fields: [pm9000_id], references: [id])
-
-  @@map("measurement_histories_pm9000_nibp")
 }
 
 model MeasurementHistoriesDS001 {
@@ -427,32 +412,29 @@ model MeasurementHistoriesDS001 {
   spo2             Float    @db.Float
   pulse_rate_spo2  Float    @db.Float
   respiratory_rate Float    @db.Float
+  systolic         Float?   @db.Float
+  diastolic        Float?   @db.Float
+  map              Float?   @db.Float
+  pulse_rate       Float?   @db.Float
   recorded_at      DateTime @default(now())
 
   patient_handler_id String
 
-  patient_handler                  PatientHandler                 @relation(fields: [patient_handler_id], references: [id])
+  patient_handler                  PatientHandler @relation(fields: [patient_handler_id], references: [id])
   measurement_histories_ds001_nibp String?
-  MeasurementHistoriesDS001Nibp    MeasurementHistoriesDS001Nibp?
 
   @@map("measurement_histories_ds001")
 }
 
-model MeasurementHistoriesDS001Nibp {
-  id          String   @id @default(uuid())
-  systolic    Float    @db.Float
-  diastolic   Float    @db.Float
-  map         Float    @db.Float
-  pulse_rate  Float    @db.Float
-  recorded_at DateTime @default(now())
+model Ecg1200g {
+  id                 String  @id @default(uuid())
+  file_path          String?
+  image_path         String?
+  patient_handler_id String  @unique
 
-  ds001_id           String? @unique
-  patient_handler_id String
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
 
-  patient_handler             PatientHandler             @relation(fields: [patient_handler_id], references: [id])
-  measurement_histories_ds001 MeasurementHistoriesDS001? @relation(fields: [ds001_id], references: [id])
-
-  @@map("measurement_histories_ds001_nibp")
+  @@map("ecg_1200g")
 }
 
 //Activity
