@@ -5,11 +5,17 @@ async function main() {
   // 1. Create roles
   const roles = await prisma.role.createMany({
     data: [
-      { id: 1, name: "admin", kode: "ADM" },
-      { id: 2, name: "doctor", kode: "DOC" },
-      { id: 3, name: "nurse", kode: "NUR" },
+      { name: "admin", kode: "ADM" },
+      { name: "doctor", kode: "DOC" },
+      { name: "nurse", kode: "NUR" },
     ],
     skipDuplicates: true,
+  });
+
+  const roleAdmin = await prisma.role.findFirst({
+    where: {
+      name: "admin",
+    },
   });
 
   // 2. Create hospital
@@ -20,7 +26,7 @@ async function main() {
     },
   });
 
-  const adminFound = await prisma.user.findUnique({
+  const adminFound = await prisma.user.findFirst({
     where: {
       username: "admin",
     },
@@ -37,7 +43,7 @@ async function main() {
         phone: "08123456789",
         is_active: true,
         hospital_id: hospital.id,
-        role_id: 1,
+        role_id: roleAdmin.id,
         admin: {
           create: {
             name: "Super Admin",

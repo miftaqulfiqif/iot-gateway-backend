@@ -7,31 +7,18 @@ import { validate } from "../../validation/validation.js";
 import { v4 as uuid } from "uuid";
 import bcrypt, { compare } from "bcrypt";
 import { ResponseError } from "../../errors/response-error.js";
+import {idGenerator} from "../../applications/generator/id-generator.js";
 
-export const registerService = async (request) => {
+export const createUserService = async (hospitalId,request) => {
   try {
     const user = validate(registerValidation, request);
-    let { hospital_name, name, username, password } = user;
+    let { name, username, password, role_id } = user;
 
-    const adminId = "ADM" + uuid();
-
-    //Create hospital
-    const hospital = await prismaClient.hospital.create({
-      data: {
-        id: uuid(),
-        name: hospital_name,
-      },
-      select: {
-        id: true,
-        name: true,
-      },
-    });
-
-    const countUser = await prismaClient.user.count({
+    const findUser = await prismaClient.user.findFirst({
       where: { username: username },
     });
 
-    if (countUser > 0) {
+    if (findUser) {
       throw new ResponseError(400, "Username already exists");
     }
 
@@ -40,33 +27,23 @@ export const registerService = async (request) => {
     //Create User
     const createUser = await prismaClient.user.create({
       data: {
-        id: adminId,
+        id: uuid(),
         username: username,
         password: password,
         is_active: true,
-        hospital_id: hospital.id,
-        role_id: 1,
+        hospital_id: hospitalId,
+        role_id: role_id,
       },
       select: {
         id: true,
-        hospital_id: true,
+        hospital: true,
         username: true,
-      },
-    });
-
-    await prismaClient.admin.create({
-      data: {
-        user_id: createUser.id,
-        name: name,
-      },
-      select: {
-        user_id: true,
       },
     });
 
     return {
       id: createUser.id,
-      hospital: hospital.name,
+      hospital_id: hospitalId,
       name: name,
       username: username,
     };
