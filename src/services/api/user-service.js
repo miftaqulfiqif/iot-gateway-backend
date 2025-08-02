@@ -7,31 +7,18 @@ import { validate } from "../../validation/validation.js";
 import { v4 as uuid } from "uuid";
 import bcrypt, { compare } from "bcrypt";
 import { ResponseError } from "../../errors/response-error.js";
+import {idGenerator} from "../../applications/generator/id-generator.js";
 
-export const registerService = async (request) => {
+export const createUserService = async (hospitalId,request) => {
   try {
     const user = validate(registerValidation, request);
-    let { hospital_name, name, username, password } = user;
+    let { name, username, password, role_id } = user;
 
-    const adminId = "ADM" + uuid();
-
-    //Create hospital
-    const hospital = await prismaClient.hospital.create({
-      data: {
-        id: uuid(),
-        name: hospital_name,
-      },
-      select: {
-        id: true,
-        name: true,
-      },
-    });
-
-    const countUser = await prismaClient.user.count({
+    const findUser = await prismaClient.user.findFirst({
       where: { username: username },
     });
 
-    if (countUser > 0) {
+    if (findUser) {
       throw new ResponseError(400, "Username already exists");
     }
 
@@ -40,33 +27,23 @@ export const registerService = async (request) => {
     //Create User
     const createUser = await prismaClient.user.create({
       data: {
-        id: adminId,
+        id: uuid(),
         username: username,
         password: password,
         is_active: true,
-        hospital_id: hospital.id,
-        role_id: 1,
+        hospital_id: hospitalId,
+        role_id: role_id,
       },
       select: {
         id: true,
-        hospital_id: true,
+        hospital: true,
         username: true,
-      },
-    });
-
-    await prismaClient.admin.create({
-      data: {
-        user_id: createUser.id,
-        name: name,
-      },
-      select: {
-        user_id: true,
       },
     });
 
     return {
       id: createUser.id,
-      hospital: hospital.name,
+      hospital_id: hospitalId,
       name: name,
       username: username,
     };
@@ -80,7 +57,7 @@ export const currentUserService = async (username) => {
   try {
     const user = await prismaClient.user.findUnique({
       where: {
-        username: username,
+        username,
       },
       include: {
         role: true,
@@ -95,24 +72,25 @@ export const currentUserService = async (username) => {
     if (!user) {
       throw new ResponseError(404, "User not found");
     }
-
     // Get role
+    const roleCode = user.role?.kode ?? "";
     const roleName = user.role?.name ?? "";
+
     // Get name by role
-    let name = "";
-    if (roleName === "admin") {
-      name = user.admin?.name ?? "";
-    } else if (roleName === "doctor") {
-      name = user.doctor?.name ?? "";
-    } else if (roleName === "nurse") {
-      name = user.nurse?.name ?? "";
-    }
+    const name =
+      roleCode === "ADM"
+        ? user.admin?.name
+        : roleCode === "DOC"
+        ? user.doctor?.name
+        : roleCode === "NUR"
+        ? user.nurse?.name
+        : "";
 
     return {
-      name: name,
+      name: name ?? "",
       username: user.username,
+      role: roleName,
       profile_picture: user.profile_picture?.path ?? "",
-      role: user.role?.name ?? "",
       hospital: user.hospital
         ? {
             id: user.hospital.id,
@@ -257,5 +235,128 @@ export const loginService = async (request) => {
     };
   } catch (e) {
     throw e;
+  }
+};
+
+export const getUsersService = async () => {
+  try {
+    const users = await prismaClient.user.findMany({
+      include: {
+        role: true,
+        hospital: true,
+        admin: true,
+        doctor: true,
+        nurse: true,
+        profile_picture: true,
+      },
+    });
+
+    const result = users.map((user) => {
+      const roleCode = user.role?.kode ?? "";
+      const roleName = user.role?.name ?? "";
+
+      const name =
+        roleCode === "ADM"
+          ? user.admin?.name
+          : roleCode === "DOC"
+          ? user.doctor?.name
+          : roleCode === "NUR"
+          ? user.nurse?.name
+          : "";
+
+      return {
+        name: name ?? "",
+        email: user.email,
+        phone: user.phone,
+        username: user.username,
+        role: roleName,
+        created_at: user.created_at,
+      };
+    });
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getUserByUsernameService = async (username) => {
+  try {
+    const user = await prismaClient.user.findFirst({
+      where: { username },
+      include: {
+        role: true,
+        hospital: true,
+        admin: true,
+        doctor: true,
+        nurse: true,
+        profile_picture: true,
+      },
+    });
+
+    if (!user) {
+      throw new ResponseError(404, "User not found");
+    }
+
+    const roleCode = user.role?.id ?? "";
+    const roleName = user.role?.name ?? "";
+
+    const roleDataMap = {
+      1: user.admin,
+      2: user.doctor,
+      3: user.nurse,
+    };
+
+    const roleData = roleDataMap[roleCode] ?? {};
+
+    const allRecentHandlers = await prismaClient.patientHandler.findMany({
+      where: {
+        user_id: user.id,
+      },
+      orderBy: {
+        timestamp: "desc",
+      },
+      select: {
+        id: true,
+        patient_id: true,
+        patient: {
+          select: {
+            name: true,
+          },
+        },
+        timestamp: true,
+      },
+    });
+
+    const uniquePatients = new Map();
+
+    // Filter only patient_id unique
+    for (const handler of allRecentHandlers) {
+      if (!uniquePatients.has(handler.patient_id)) {
+        uniquePatients.set(handler.patient_id, handler);
+      }
+    }
+
+    const recentPatient = Array.from(uniquePatients.values()).slice(0, 10);
+
+    return {
+      id: user.id,
+      name: roleData.name ?? "",
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      role: roleName,
+      place_of_birth: roleData.place_of_birth ?? "",
+      date_of_birth: roleData.date_of_birth ?? "",
+      address: roleData.address ?? "",
+      profile_picture: user.profile_picture?.path ?? "",
+      recent_patients: recentPatient.map((item) => ({
+        id: item.id,
+        patient_name: item.patient?.name ?? "",
+        timestamp: item.timestamp,
+      })),
+    };
+  } catch (error) {
+    throw error;
   }
 };

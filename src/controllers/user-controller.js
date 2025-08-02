@@ -2,12 +2,15 @@ import {
   currentUserService,
   loginService,
   logOutService,
-  registerService,
+  createUserService,
+  getUsersService,
+  getUserByUsernameService,
 } from "../services/api/user-service.js";
 
-const register = async (req, res, next) => {
+const create = async (req, res, next) => {
   try {
-    const result = await registerService(req.body);
+    const user = req.user;
+    const result = await createUserService(user.hospital_id, req.body);
     res.status(200).json({ message: "User created", data: result });
   } catch (error) {
     next(error);
@@ -39,7 +42,7 @@ const login = async (req, res, next) => {
     res.cookie("token", result.token, {
       httpOnly: true,
       secure: false,
-      sameSite: "lax",
+      sameSite: "Lax",
     });
 
     const { token, ...userWithoutToken } = result;
@@ -49,4 +52,29 @@ const login = async (req, res, next) => {
   }
 };
 
-export default { register, currentUser, logout, login };
+const getUsers = async (req, res, next) => {
+  try {
+    const result = await getUsersService();
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getUserByUsername = async (req, res, next) => {
+  try {
+    const result = await getUserByUsernameService(req.params.username);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export default {
+  create,
+  currentUser,
+  logout,
+  login,
+  getUsers,
+  getUserByUsername,
+};

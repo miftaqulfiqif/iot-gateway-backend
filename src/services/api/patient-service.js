@@ -50,13 +50,13 @@ export const createPatient = async (user, patient) => {
       });
 
       // Create patient handler
-      await tx.patientHandler.create({
-        data: {
-          user_id: user.id,
-          patient_id: newPatient.id,
-          hospital_id: user.hospital_id,
-        },
-      });
+      // await tx.patientHandler.create({
+      //   data: {
+      //     user_id: user.id,
+      //     patient_id: newPatient.id,
+      //     hospital_id: user.hospital_id,
+      //   },
+      // });
     });
     return newPatient;
   } catch (error) {
