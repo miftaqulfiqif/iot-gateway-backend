@@ -209,10 +209,11 @@ model PatientHandler {
 model Patient {
   id             String   @id @default(uuid())
   nik            String   @unique
+  no_kk          String?  @db.VarChar(50)
+  ihs_number     String?  @db.VarChar(100)
   barcode_img    String   @db.LongText
   name           String   @db.VarChar(255)
-  gender         String   @db.VarChar(255)
-  address        String?  @db.LongText
+  gender         Gender
   phone          String?  @db.VarChar(16)
   place_of_birth String?  @db.VarChar(50)
   date_of_birth  DateTime @db.DateTime()
@@ -220,11 +221,80 @@ model Patient {
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
+  address_id      String
+  address         Address          @relation(fields: [address_id], references: [id])
   patient_handler PatientHandler[]
   babies          Baby[]
   patient_room    PatientRoom?
 
   @@map("patients")
+}
+
+model Address {
+  id          String   @id @default(uuid())
+  use         String   @db.VarChar(20)
+  line        String   @db.LongText
+  rt          String?  @db.VarChar(10)
+  rw          String?  @db.VarChar(10)
+  postal_code String   @db.VarChar(10)
+  country     String   @db.VarChar(10)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  province_id String @db.Char(2)
+  regency_id  String @db.Char(4)
+  district_id String @db.Char(7)
+  village_id  String @db.Char(10)
+
+  province Province @relation(fields: [province_id], references: [id])
+  regency  Regency  @relation(fields: [regency_id], references: [id])
+  district District @relation(fields: [district_id], references: [id])
+  village  Village  @relation(fields: [village_id], references: [id])
+
+  patient Patient[]
+
+  @@map("addresses")
+}
+
+model Province {
+  id        String    @id @db.Char(2) // Kode wilayah KEMENDAGRI
+  name      String    @db.VarChar(255)
+  regencies Regency[]
+  Address   Address[]
+
+  @@map("provinces")
+}
+
+model Regency {
+  id          String     @id @db.Char(4)
+  name        String     @db.VarChar(255)
+  province_id String     @db.Char(2)
+  province    Province   @relation(fields: [province_id], references: [id])
+  districts   District[]
+  addresses   Address[]
+
+  @@map("regencies")
+}
+
+model District {
+  id         String    @id @db.Char(7)
+  name       String    @db.VarChar(255)
+  regency_id String    @db.Char(4)
+  regency    Regency   @relation(fields: [regency_id], references: [id])
+  villages   Village[]
+  addresses  Address[]
+
+  @@map("districts")
+}
+
+model Village {
+  id          String    @id @db.Char(10)
+  name        String    @db.VarChar(255)
+  district_id String    @db.Char(7)
+  district    District  @relation(fields: [district_id], references: [id])
+  addresses   Address[]
+
+  @@map("villages")
 }
 
 model Baby {
@@ -315,6 +385,8 @@ model CentralMonitor {
   patient_handler_id String
 
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+
+  @@map("central_monitors")
 }
 
 // Digit Pro Baby
