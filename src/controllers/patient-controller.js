@@ -3,9 +3,8 @@ import { ResponseError } from "../errors/response-error.js";
 import {
   createPatient,
   getPatient,
-  getPatientByHospitalService,
   getPatientByUserService,
-  getPatients,
+  getPatients, getPatientsService,
   showBarcodeTestService,
   updatePatientService,
 } from "../services/api/patient-service.js";
@@ -40,15 +39,13 @@ const getAll = async (req, res, next) => {
 
 // Get patients by hospital
 const getPatientsByHospital = async (req, res, next) => {
-  const hospital = req.user.hospital_id;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
   const query = req.query.query || "";
 
   try {
-    const result = await getPatientByHospitalService(
-      hospital,
+    const result = await getPatientsService(
       page,
       limit,
       skip,

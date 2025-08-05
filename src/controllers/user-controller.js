@@ -3,7 +3,7 @@ import {
   loginService,
   logOutService,
   createUserService,
-  getUsersService,
+  getAllUserService,
   getUserByUsernameService,
 } from "../services/api/user-service.js";
 
@@ -52,9 +52,16 @@ const login = async (req, res, next) => {
   }
 };
 
-const getUsers = async (req, res, next) => {
+const getAllUsers = async (req, res, next) => {
+  const page = parseInt(req.query.page) || 1;
+  const query = req.query.query || "";
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
   try {
-    const result = await getUsersService();
+    const result = await getAllUserService(
+        page, limit, skip, query
+    );
     res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -75,6 +82,6 @@ export default {
   currentUser,
   logout,
   login,
-  getUsers,
+  getAllUsers,
   getUserByUsername,
 };

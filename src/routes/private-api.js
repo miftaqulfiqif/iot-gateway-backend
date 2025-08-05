@@ -9,7 +9,8 @@ import measurementHistoriesDigitProIdaController from "../controllers/digit-pro-
 import measurementHistoriesDigitProBmiController from "../controllers/digit-pro-bmi-controller.js";
 import measurementHistoriesDoppler from "../controllers/doppler-controller.js";
 import deviceController from "../controllers/device-controller.js";
-import {publicRouter} from "./public-api.js";
+import measurementActivityController from "../controllers/measurement-activity-controller.js";
+import iotGatewayController from "../controllers/iot-gateway-controller.js";
 
 const privateRouter = new express.Router();
 privateRouter.use(authMiddleware);
@@ -18,24 +19,31 @@ privateRouter.use(authMiddleware);
 privateRouter.post("/api/users", userController.create); // Register user
 privateRouter.get("/api/user-current", userController.currentUser); // Get current user
 privateRouter.post("/api/user-logout", userController.logout); // Logout
-privateRouter.get("/api/users", userController.getUsers); // Get All Users
+privateRouter.get("/api/users", userController.getAllUsers); // Get All Users
 privateRouter.get("/api/user/:username", userController.getUserByUsername); // Get User By Username
 
 // Patient
 privateRouter.post("/api/patients", patientController.create); // Create
 privateRouter.patch("/api/patient-update/:id", patientController.update); // Update
 privateRouter.get(
-  "/api/patients-by-hospital",
+  "/api/patients",
   patientController.getPatientsByHospital
 ); // Get patients by hospital
 privateRouter.get("/api/patients-by-user", patientController.getPatientsByUser); // Get patients by user
-privateRouter.get("/api/patients", patientController.getAll); // Get all
+privateRouter.get("/api/all-patients", patientController.getAll); // Get all
 privateRouter.get("/api/patient/:id", patientController.get); // Get
 
 //Baby
 privateRouter.get("/api/babies", babyController.getAll); // Get all
-privateRouter.get("/api/baby/:patient_id", babyController.getByPatientId); // Get by patient id
+privateRouter.get("/api/baby/:patient_id", babyController.getByNikParent); // Get by patient id
 privateRouter.post("/api/babies", babyController.create); // Create
+
+// Iot Gatewy
+privateRouter.post("/api/iot-gateways", iotGatewayController.createNewIotGateway);
+privateRouter.get("/api/iot-gateways", iotGatewayController.getIotGateways)
+
+// Measurement Activity
+privateRouter.post("/api/measurement-activity", measurementActivityController.createNewMeasurementActivity) // Create new measurement activity
 
 // Show barcode patient
 privateRouter.get(
@@ -136,6 +144,7 @@ privateRouter.post(
 ); // Connect device
 privateRouter.post("/api/devices/connect-tcpip", deviceController.connectTcpIP); // Connect device tcp-ip
 privateRouter.get("/api/devices", deviceController.get); // Get all device connected
+privateRouter.get("/api/detail-device/:device_id", deviceController.getDetail); // Get all device connected
 privateRouter.delete(
   "/api/devices/disconnect-ble/:mac",
   deviceController.disconnectBluetooth
