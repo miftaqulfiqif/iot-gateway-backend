@@ -19,10 +19,7 @@ export const authMiddleware = async (req, res, next) => {
         role: true,
         hospital: true,
         profile_picture: true,
-        admin: true,
-        doctor: true,
-        nurse: true,
-      },
+      }
     });
 
     // If token is not valid

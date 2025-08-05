@@ -9,43 +9,98 @@ import bcrypt, { compare } from "bcrypt";
 import { ResponseError } from "../../errors/response-error.js";
 import {idGenerator} from "../../applications/generator/id-generator.js";
 
-export const createUserService = async (hospitalId,request) => {
+export const createUserService = async (hospitalId, request) => {
   try {
-    const user = validate(registerValidation, request);
-    let { name, username, password, role_id } = user;
+    const { name, gender, address, username, password, email, phone, role_id, nik, ihs_number, last_education, experience, speciality } = request;
+    const {use, line, city, postal_code, country, rt, rw, province_id, regency_id, district_id, village_id} = address
 
-    const findUser = await prismaClient.user.findFirst({
+    const findUser = await prismaClient.user.findUnique({
       where: { username: username },
     });
-
     if (findUser) {
-      throw new ResponseError(400, "Username already exists");
+      throw new ResponseError(401, "Username already exists");
     }
 
-    password = await bcrypt.hash(password, 10);
+    if (nik) {
+      const findNikUser = await prismaClient.user.findFirst({
+        where: { nik },
+      });
+      if (findNikUser) {
+        throw new ResponseError(401, "NIK already exists");
+      }
+    }
+    if (ihs_number) {
+      const findIhsNumber = await prismaClient.user.findFirst({
+        where: { ihs_number },
+      });
+      if (findIhsNumber) {
+        throw new ResponseError(401, "IHS Number already exists");
+      }
+    }
+
+    const passwordHashed = await bcrypt.hash(password, 10);
+
+    const userAddress = await prismaClient.address.create({
+      data: {
+        use: use,
+        line: line,
+        city: city,
+        postal_code: postal_code,
+        country: country,
+        rt: rt,
+        rw: rw,
+        province_id: province_id,
+        regency_id: regency_id,
+        district_id: district_id,
+        village_id: village_id,
+      }
+    })
 
     //Create User
     const createUser = await prismaClient.user.create({
       data: {
-        id: uuid(),
+        name: name,
+        gender: gender,
+        address: {connect: {id: userAddress.id}},
         username: username,
-        password: password,
-        is_active: true,
-        hospital_id: hospitalId,
-        role_id: role_id,
+        password: passwordHashed,
+        email: email,
+        phone: phone,
+
+        nik: nik,
+        ihs_number: ihs_number,
+        last_education:  last_education,
+        experience: experience,
+        speciality: speciality,
+
+        hospital: { connect: { id: hospitalId } },
+        role: {connect: {id: role_id}},
       },
-      select: {
-        id: true,
+      include: {
         hospital: true,
-        username: true,
+        address: true,
+        role: true
       },
     });
 
     return {
       id: createUser.id,
-      hospital_id: hospitalId,
-      name: name,
-      username: username,
+      name: createUser.name,
+      gender: createUser.gender,
+      address: createUser.address,
+      username: createUser.username,
+      password: createUser.passwordHashed,
+      email: createUser.email,
+      phone: createUser.phone,
+
+      nik: nik ?? " -- ",
+      ihs_number: ihs_number ?? " -- ",
+      last_education: last_education ?? " -- ",
+      experience: experience ?? " -- ",
+      speciality: speciality ?? " -- ",
+
+      hospital_id: createUser.hospital,
+      role: createUser.role.name,
     };
   } catch (error) {
     throw error;
@@ -62,9 +117,6 @@ export const currentUserService = async (username) => {
       include: {
         role: true,
         hospital: true,
-        admin: true,
-        doctor: true,
-        nurse: true,
         profile_picture: true,
       },
     });
@@ -73,21 +125,10 @@ export const currentUserService = async (username) => {
       throw new ResponseError(404, "User not found");
     }
     // Get role
-    const roleCode = user.role?.kode ?? "";
     const roleName = user.role?.name ?? "";
 
-    // Get name by role
-    const name =
-      roleCode === "ADM"
-        ? user.admin?.name
-        : roleCode === "DOC"
-        ? user.doctor?.name
-        : roleCode === "NUR"
-        ? user.nurse?.name
-        : "";
-
     return {
-      name: name ?? "",
+      name: user.name,
       username: user.username,
       role: roleName,
       profile_picture: user.profile_picture?.path ?? "",
@@ -123,7 +164,7 @@ export const loginService = async (request) => {
   try {
     const user = validate(loginValidation, request);
 
-    const userFound = await prismaClient.user.findFirst({
+    const userFound = await prismaClient.user.findUnique({
       where: {
         username: user.username,
       },
@@ -140,21 +181,6 @@ export const loginService = async (request) => {
           },
         },
         role: {
-          select: {
-            name: true,
-          },
-        },
-        admin: {
-          select: {
-            name: true,
-          },
-        },
-        doctor: {
-          select: {
-            name: true,
-          },
-        },
-        nurse: {
           select: {
             name: true,
           },
@@ -193,88 +219,73 @@ export const loginService = async (request) => {
       select: {
         token: true,
         username: true,
-        admin: {
-          select: {
-            name: true,
-          },
-        },
-        doctor: {
-          select: {
-            name: true,
-          },
-        },
-        nurse: {
-          select: {
-            name: true,
-          },
-        },
+        name: true,
+        profile_picture: true,
+        role: true,
+        hospital: true,
       },
     });
 
-    let displayName = "Unknown";
 
-    switch (userFound.role_id) {
-      case 1:
-        displayName = userFound.admin?.name ?? "No admin data";
-        break;
-      case 2:
-        displayName = userFound.doctor?.name ?? "No doctor data";
-        break;
-      case 3:
-        displayName = userFound.nurse?.name ?? "No nurse data";
-        break;
-    }
 
     return {
       token: updatedUser.token,
-      name: displayName,
+      name: updatedUser.name,
       username: updatedUser.username,
-      profile_picture: userFound.profile_picture,
-      role: userFound.role.name,
-      hospital: userFound.hospital,
+      profile_picture: updatedUser.profile_picture,
+      role: updatedUser.role.name,
+      hospital: updatedUser.hospital,
     };
   } catch (e) {
     throw e;
   }
 };
 
-export const getUsersService = async () => {
+export const getAllUserService = async (
+    page, limit, skip, query
+) => {
   try {
+    const searchCondition = query ? {
+      OR: [{ name: { contains: query} }]
+    } : {};
+
+    const whereConditions = {
+      ...searchCondition,
+    }
+
+    const total = await prismaClient.user.count({where: whereConditions});
+    const total_page = limit > 0 ? Math.ceil(total / limit) : 0;
+
     const users = await prismaClient.user.findMany({
-      include: {
-        role: true,
-        hospital: true,
-        admin: true,
-        doctor: true,
-        nurse: true,
-        profile_picture: true,
+      where: whereConditions,
+      skip: skip,
+      take: limit,
+      orderBy: {
+        created_at: "desc",
       },
-    });
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        username: true,
+        role: {
+          select: {
+            name: true,
+          },
+        },
+        created_at: true,
+      }
+    })
 
-    const result = users.map((user) => {
-      const roleCode = user.role?.kode ?? "";
-      const roleName = user.role?.name ?? "";
 
-      const name =
-        roleCode === "ADM"
-          ? user.admin?.name
-          : roleCode === "DOC"
-          ? user.doctor?.name
-          : roleCode === "NUR"
-          ? user.nurse?.name
-          : "";
+    return {
+      current_page: page,
+      total_items: total,
+      total_page: total_page,
+      data: users,
+    }
 
-      return {
-        name: name ?? "",
-        email: user.email,
-        phone: user.phone,
-        username: user.username,
-        role: roleName,
-        created_at: user.created_at,
-      };
-    });
-
-    return result;
   } catch (error) {
     throw error;
   }
@@ -287,27 +298,14 @@ export const getUserByUsernameService = async (username) => {
       include: {
         role: true,
         hospital: true,
-        admin: true,
-        doctor: true,
-        nurse: true,
         profile_picture: true,
+        address: true,
       },
     });
 
     if (!user) {
       throw new ResponseError(404, "User not found");
     }
-
-    const roleCode = user.role?.id ?? "";
-    const roleName = user.role?.name ?? "";
-
-    const roleDataMap = {
-      1: user.admin,
-      2: user.doctor,
-      3: user.nurse,
-    };
-
-    const roleData = roleDataMap[roleCode] ?? {};
 
     const allRecentHandlers = await prismaClient.patientHandler.findMany({
       where: {
@@ -322,7 +320,7 @@ export const getUserByUsernameService = async (username) => {
         patient: {
           select: {
             name: true,
-          },
+        },
         },
         timestamp: true,
       },
@@ -341,18 +339,19 @@ export const getUserByUsernameService = async (username) => {
 
     return {
       id: user.id,
-      name: roleData.name ?? "",
+      name: user.name,
+      ihs_number: user.ihs_number ? user.ihs_number : " -- ",
       username: user.username,
       email: user.email,
       phone: user.phone,
-      role: roleName,
-      place_of_birth: roleData.place_of_birth ?? "",
-      date_of_birth: roleData.date_of_birth ?? "",
-      address: roleData.address ?? "",
+      role: user.role.name,
+      place_of_birth: user.place_of_birth,
+      date_of_birth: user.date_of_birth,
+      address: user.address,
       profile_picture: user.profile_picture?.path ?? "",
       recent_patients: recentPatient.map((item) => ({
         id: item.id,
-        patient_name: item.patient?.name ?? "",
+        patient_name: item.patient?.name ?? " -- ",
         timestamp: item.timestamp,
       })),
     };

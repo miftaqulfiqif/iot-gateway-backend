@@ -1,7 +1,7 @@
 import {
   createBabyService,
   getBabiesService,
-  getBabyByPatientIdService,
+  getBabyByNikService,
 } from "../services/api/baby-service.js";
 
 // get all babies
@@ -15,9 +15,18 @@ const getAll = async (req, res, next) => {
 };
 
 // get baby by patient id
+const getByNikParent = async (req, res, next) => {
+  try {
+    const result = await getBabyByNikService(req.query.nik);
+    res.status(200).json({ message: "Success getting babies", data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getByPatientId = async (req, res, next) => {
   try {
-    const result = await getBabyByPatientIdService(req.params.patient_id);
+    const result = await getBabyByPatientId(req.params.nik);
     res.status(200).json({ message: "Success getting babies", data: result });
   } catch (error) {
     next(error);
@@ -34,4 +43,4 @@ const create = async (req, res, next) => {
   }
 };
 
-export default { getAll, getByPatientId, create };
+export default { getAll, getByNikParent, getByPatientId, create };

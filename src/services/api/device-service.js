@@ -4,6 +4,8 @@ import { ResponseError } from "../../errors/response-error.js";
 import { getSocketIO } from "../socket/socket-instance.js";
 import SocketRouter from "../socket/socket-router.js";
 
+
+
 export const connectDeviceBluetooth = async (device) => {
   if (device.name === null || device.name === undefined || device.name === "") {
     device.name = device.device;
@@ -12,25 +14,18 @@ export const connectDeviceBluetooth = async (device) => {
   // Check if mac device exist
   const macDeviceFound = await prismaClient.deviceConnected.findUnique({
     where: {
-      id: device.id,
+      mac_address: device.mac_address,
     },
   });
   if (macDeviceFound) {
-    throw new ResponseError(400, "Mac device already connected");
-  }
-
-  // Check if code device exist
-  const codeDeviceFound = await prismaClient.deviceConnected.findUnique({
-    where: {
-      id: device.id,
-    },
-  });
-  if (codeDeviceFound) {
-    throw new ResponseError(400, "Code device already connected");
+    throw new ResponseError(401, "Mac device already connected");
   }
 
   const deviceConnecting = await prismaClient.deviceConnected.create({
-    data: device,
+    data: {
+      ...device,
+      is_connected: true,
+    },
   });
 
   //Emit MQTT
@@ -59,24 +54,14 @@ export const connectDeviceBluetooth = async (device) => {
   return deviceConnecting;
 };
 export const connectDeviceTcpIP = async (device) => {
-  // Check if mac device exist
-  const macDeviceFound = await prismaClient.deviceConnected.findUnique({
+  // Check if ip address device exist
+  const ipAddressDeviceFound = await prismaClient.deviceConnected.findUnique({
     where: {
-      id: device.id,
+      ip_address: device.ip_address,
     },
   });
-  if (macDeviceFound) {
-    throw new ResponseError(400, "Mac device already connected");
-  }
-
-  // Check if code device exist
-  const codeDeviceFound = await prismaClient.deviceConnected.findUnique({
-    where: {
-      id: device.id,
-    },
-  });
-  if (codeDeviceFound) {
-    throw new ResponseError(400, "Code device already connected");
+  if (ipAddressDeviceFound) {
+    throw new ResponseError(401, "Ip Address device already connected");
   }
 
   //Emit MQTT
@@ -103,7 +88,10 @@ export const connectDeviceTcpIP = async (device) => {
   );
 
   const deviceConnecting = await prismaClient.deviceConnected.create({
-    data: device,
+    data: {
+      ...device,
+      is_connected: true,
+    },
   });
 
   return deviceConnecting;
@@ -181,4 +169,18 @@ export const disconnectDeviceTcpIP = async (ipDevice) => {
 
 export const getDevices = async () => {
   return await prismaClient.deviceConnected.findMany();
+};
+
+export const getDetailService = async (deviceId) => {
+ try {
+   const device = await prismaClient.deviceConnected.findUnique({
+     where: { id: deviceId },
+   })
+
+   return {
+     detail: device,
+   };
+ }catch (error) {
+   throw error;
+ }
 };

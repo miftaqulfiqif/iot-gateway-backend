@@ -25,9 +25,9 @@ model Role {
 }
 
 enum Gender {
-  MALE
-  FEMALE
-  OTHER
+  male
+  female
+  other
 }
 
 model Hospital {
@@ -35,35 +35,56 @@ model Hospital {
   name      String  @db.VarChar(255)
   logo_path String?
 
-  user              User[]
-  devices_connected DeviceConnected[]
-  iot_gateway       IotGateway[]
+  user           User[]
+  iot_gateway    IotGateway[]
+  satu_sehat_env SatuSehatEnv?
 
   @@map("hospitals")
 }
 
+model SatuSehatEnv {
+  id              String  @id @default(uuid())
+  organization_id String? @db.LongText
+  client_id       String? @db.LongText
+  client_secret   String? @db.LongText
+  token           String? @db.LongText
+
+  hospital_id String @unique
+
+  hospital Hospital @relation(fields: [hospital_id], references: [id])
+
+  @@map("satu_sehat_env")
+}
+
 model User {
-  id         String   @id @default(uuid())
-  username   String   @unique
-  password   String   @db.VarChar(255)
-  email      String?  @db.VarChar(50)
-  phone      String?  @db.VarChar(16)
-  token      String?
-  is_active  Boolean
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id             String    @id @default(uuid())
+  username       String    @unique
+  password       String    @db.VarChar(255)
+  email          String?   @db.VarChar(50)
+  nik            String?   @unique @db.VarChar(50)
+  ihs_number     String?   @db.VarChar(100)
+  name           String    @db.VarChar(255)
+  place_of_birth String?   @db.VarChar(255)
+  date_of_birth  DateTime? @db.DateTime()
+  gender         Gender
+  address_id     String
+  phone          String?   @db.VarChar(16)
+  last_education String?   @db.VarChar(255)
+  experience     String?   @db.VarChar(10)
+  speciality     String?   @db.VarChar(255)
+  token          String?
+  is_active      Boolean   @default(true)
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
 
   role_id     String
   hospital_id String
 
   hospital Hospital @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
   role     Role     @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  address  Address  @relation(fields: [address_id], references: [id])
 
-  admin  Admin?  @relation("UserAdmin")
-  doctor Doctor? @relation("UserDoctor")
-  nurse  Nurse?  @relation("UserNurse")
-
-  patient_handle  PatientHandler[]
+  patient_handler PatientHandler[]
   activity_log    ActivityLogs[]
   profile_picture ProfilePicture?
 
@@ -71,7 +92,7 @@ model User {
 }
 
 model IotGateway {
-  id          String   @id @default(uuid())
+  id          String   @id @db.VarChar(255)
   name        String   @db.VarChar(255)
   description String?  @db.VarChar(255)
   created_at  DateTime @default(now())
@@ -79,59 +100,10 @@ model IotGateway {
 
   hospital_id String
 
-  hospital        Hospital          @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
-  DeviceConnected DeviceConnected[]
+  hospital         Hospital          @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
+  device_connected DeviceConnected[]
 
   @@map("iot_gateways")
-}
-
-model Admin {
-  name String
-
-  user_id String @id
-
-  user User @relation("UserAdmin", fields: [user_id], references: [id])
-
-  @@map("admins")
-}
-
-model Doctor {
-  nid                 String   @unique
-  name                String
-  place_of_birth      String   @db.VarChar(255)
-  date_of_birth       DateTime @db.DateTime()
-  gender              Gender
-  address             String   @db.LongText
-  last_education      String   @db.VarChar(255)
-  experience_of_years String   @db.VarChar(10)
-  specialty           String   @db.VarChar(255)
-
-  user_id  String @id @unique
-  admin_id String
-
-  user  User   @relation("UserDoctor", fields: [user_id], references: [id])
-  rooms Room[]
-
-  @@map("doctors")
-}
-
-model Nurse {
-  nira                String   @unique
-  name                String   @db.VarChar(255)
-  place_of_birth      String   @db.VarChar(50)
-  date_of_birth       DateTime @db.DateTime()
-  gender              Gender
-  address             String   @db.LongText
-  last_education      String   @db.VarChar(50)
-  experience_of_years String   @db.VarChar(10)
-
-  user_id  String @id @unique
-  admin_id String
-
-  user  User   @relation("UserNurse", fields: [user_id], references: [id])
-  rooms Room[]
-
-  @@map("nurses")
 }
 
 model ProfilePicture {
@@ -146,42 +118,32 @@ model ProfilePicture {
 }
 
 model DeviceConnected {
-  id              String         @id
+  id              String         @id @default(uuid())
+  mac_address     String?        @unique
+  ip_address      String?        @unique
+  serial_number   String?        @unique
   name            String         @db.VarChar(255)
   model           String         @db.VarChar(100)
   device_function String         @db.VarChar(100)
-  type            String         @db.VarChar(100)
+  type            String?        @db.VarChar(100)
   connection      ConnectionType
   is_connected    Boolean
+  count_used      Int?
   created_at      DateTime       @default(now())
   updated_at      DateTime       @updatedAt()
 
-  hospital_id String
-  gateway_id  String
+  gateway_id String
 
-  hospital          Hospital                @relation(fields: [hospital_id], references: [id])
-  gateway           IotGateway              @relation(fields: [gateway_id], references: [id])
-  connection_detail DeviceConnectionDetail?
+  gateway IotGateway @relation(fields: [gateway_id], references: [id])
 
   @@map("devices_connected")
 }
 
 enum ConnectionType {
   bluetooth
-  tcp_ip
+  tcpip
   serial
   other
-}
-
-model DeviceConnectionDetail {
-  device_id     String  @id
-  mac_address   String? @unique
-  ip_address    String? @unique
-  serial_number String? @unique
-
-  device DeviceConnected @relation(fields: [device_id], references: [id])
-
-  @@map("devices_connection_detail")
 }
 
 model PatientHandler {
@@ -201,6 +163,8 @@ model PatientHandler {
   central_monitor                      CentralMonitor[]
   measurement_histories_pm9000         MeasurementHistoriesPM9000[]
   measurement_histories_ds001          MeasurementHistoriesDS001[]
+  measurement_activity                 MeasurementActivity[]
+  last_nibp                            LastNibp?
   ecg_1200g                            Ecg1200g?
 
   @@map("patient_handlers")
@@ -218,10 +182,10 @@ model Patient {
   place_of_birth String?  @db.VarChar(50)
   date_of_birth  DateTime @db.DateTime()
   height         Int?     @db.Int
+  address_id     String
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
-  address_id      String
   address         Address          @relation(fields: [address_id], references: [id])
   patient_handler PatientHandler[]
   babies          Baby[]
@@ -234,10 +198,11 @@ model Address {
   id          String   @id @default(uuid())
   use         String   @db.VarChar(20)
   line        String   @db.LongText
-  rt          String?  @db.VarChar(10)
-  rw          String?  @db.VarChar(10)
+  city        String   @db.VarChar(255)
   postal_code String   @db.VarChar(10)
   country     String   @db.VarChar(10)
+  rt          String   @db.VarChar(3)
+  rw          String   @db.VarChar(3)
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -252,12 +217,13 @@ model Address {
   village  Village  @relation(fields: [village_id], references: [id])
 
   patient Patient[]
+  user    User[]
 
   @@map("addresses")
 }
 
 model Province {
-  id        String    @id @db.Char(2) // Kode wilayah KEMENDAGRI
+  id        String    @id @db.Char(2)
   name      String    @db.VarChar(255)
   regencies Regency[]
   Address   Address[]
@@ -298,12 +264,13 @@ model Village {
 }
 
 model Baby {
-  id String @id @default(uuid())
-
-  name           String   @db.VarChar(255)
-  gender         Gender
-  date_of_birth  DateTime @db.DateTime()
-  place_of_birth String?  @db.VarChar(50)
+  id                  String   @id @default(uuid())
+  ihs_number          String?  @unique
+  multi_birth_integer Int      @default(0)
+  name                String   @db.VarChar(255)
+  gender              Gender
+  date_of_birth       DateTime @db.DateTime()
+  place_of_birth      String?  @db.VarChar(50)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -356,8 +323,6 @@ model Room {
   nurse_manager String?
   doctor_id     String?
 
-  nurse        Nurse?        @relation(fields: [nurse_manager], references: [user_id], onDelete: Cascade)
-  doctor       Doctor?       @relation(fields: [doctor_id], references: [user_id], onDelete: Cascade)
   patient_room PatientRoom[]
   bed          Bed[]
 
@@ -492,10 +457,32 @@ model MeasurementHistoriesDS001 {
 
   patient_handler_id String
 
-  patient_handler                  PatientHandler @relation(fields: [patient_handler_id], references: [id])
-  measurement_histories_ds001_nibp String?
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
 
   @@map("measurement_histories_ds001")
+}
+
+model MeasurementActivity {
+  id                 String   @id @default(uuid())
+  patient_handler_id String
+  title              String   @db.VarChar(255)
+  description        String   @db.LongText()
+  recorded_at        DateTime @default(now())
+
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+
+  @@map("measurement_activities")
+}
+
+model LastNibp {
+  id                 String @id @default(uuid())
+  patient_handler_id String @unique
+  systolic           Float
+  diastolic          Float
+
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+
+  @@map("last_nibp")
 }
 
 model Ecg1200g {

@@ -6,19 +6,32 @@ import { ResponseError } from "../../errors/response-error.js";
 // Create new patient
 export const createPatient = async (user, patient) => {
   try {
+    const {name, gender, date_of_birth, nik, no_kk, ihs_number, phone, place_of_birth, address} = patient;
+    const {use, line, city, postal_code, country, rt, rw, province_id, regency_id, district_id, village_id} = address;
+
     const nikFound = await prismaClient.patient.findUnique({
-      where: { nik: patient.nik },
+      where: { nik: nik },
     });
     if (nikFound) {
       throw new ResponseError(400, "NIK already exist");
     }
 
+    if (ihs_number) {
+      const patientIhsNumberFound = await prismaClient.patient.findFirst({
+        where: { ihs_number: ihs_number },
+      })
+      if (patientIhsNumberFound) {
+        throw new ResponseError(400, "IHS Number already exist");
+      }
+    }
+
+
     // Generate age
-    const age = generateAge(patient.date_of_birth);
+    const age = generateAge(date_of_birth);
 
     // Generated id
     const patientId = await generatePatientId(
-      patient.gender === "male" ? "L" : "P",
+      gender === "male" ? "L" : "P",
       age
     );
 
@@ -37,36 +50,52 @@ export const createPatient = async (user, patient) => {
     )}`;
 
     //Save to database
-    let newPatient = null;
-    await prismaClient.$transaction(async (tx) => {
-      // Create patient
-      newPatient = await tx.patient.create({
-        data: {
-          id: patientId,
-          age: age,
-          barcode_img: barcodeBase64,
-          ...patient,
-        },
-      });
-
-      // Create patient handler
-      // await tx.patientHandler.create({
-      //   data: {
-      //     user_id: user.id,
-      //     patient_id: newPatient.id,
-      //     hospital_id: user.hospital_id,
-      //   },
-      // });
+    const newPatient = await prismaClient.patient.create({
+      data: {
+        id: patientId,
+        // age: age,
+        barcode_img: barcodeBase64,
+        nik: nik,
+        no_kk: no_kk,
+        ihs_number: ihs_number,
+        name: name,
+        gender: gender,
+        date_of_birth: new Date(date_of_birth),
+        phone: phone,
+        place_of_birth: place_of_birth,
+        address: {
+          create: {
+            use: use,
+            line: line,
+            city: city,
+            postal_code: postal_code,
+            country: country,
+            rt: rt,
+            rw: rw,
+            province_id: province_id,
+            regency_id: regency_id,
+            district_id: district_id,
+            village_id: village_id,
+          }
+        }
+      },
+      include: {
+        address: true
+      }
     });
-    return newPatient;
+
+    return {
+      ...newPatient,
+      address: newPatient.address
+
+    }
   } catch (error) {
     throw error;
   }
 };
 
 // Pagination patient by hospital
-export const getPatientByHospitalService = async (
-  hospital,
+export const getPatientsService = async (
   page,
   limit,
   skip,
@@ -81,11 +110,6 @@ export const getPatientByHospitalService = async (
 
     const whereConditions = {
       ...searchCondition,
-      patient_handle: {
-        some: {
-          hospital_id: hospital.id,
-        },
-      },
     };
 
     const total = await prismaClient.patient.count({ where: whereConditions });
@@ -226,7 +250,11 @@ export const updatePatientService = async (patientId, body) => {
 // Get all patients
 export const getPatients = async () => {
   try {
-    return await prismaClient.patient.findMany();
+    return await prismaClient.patient.findMany({
+      orderBy: {
+        created_at: "desc",
+      }
+    });
   } catch (error) {
     throw error;
   }
