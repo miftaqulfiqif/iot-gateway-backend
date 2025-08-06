@@ -20,7 +20,7 @@ privateRouter.post("/api/users", userController.create); // Register user
 privateRouter.get("/api/user-current", userController.currentUser); // Get current user
 privateRouter.post("/api/user-logout", userController.logout); // Logout
 privateRouter.get("/api/users", userController.getAllUsers); // Get All Users
-privateRouter.get("/api/user/:username", userController.getUserByUsername); // Get User By Username
+privateRouter.get("/api/user/:username", userController.getDetailUser); // Get User By Username
 
 // Patient
 privateRouter.post("/api/patients", patientController.create); // Create
@@ -125,7 +125,19 @@ privateRouter.post(
 privateRouter.get(
   "/api/measurement-histories-digit-pro-bmi",
   measurementHistoriesDigitProBmiController.getAll
-);
+); // Get All
+privateRouter.get(
+  "/api/measurement-histories-digit-pro-bmi/patient/:patient_id",
+  measurementHistoriesDigitProBmiController.getByPatientId
+); // Get By Patient ID
+privateRouter.get(
+    "/api/measurement-histories-digit-pro-bmi/device/:device_id",
+    measurementHistoriesDigitProBmiController.getByDeviceId
+); // Get By Device ID
+privateRouter.get(
+    "/api/measurement-histories-digit-pro-bmi/user/:user_id",
+    measurementHistoriesDigitProBmiController.getByUserId
+); // Get By User ID
 
 // Measurement Histories Doppler
 privateRouter.post(
@@ -135,6 +147,18 @@ privateRouter.post(
 privateRouter.get(
   "/api/measurement-histories-doppler",
   measurementHistoriesDoppler.getAll
+);
+privateRouter.get(
+    "/api/measurement-histories-doppler/patient/:patient_id",
+    measurementHistoriesDoppler.getByPatientId
+);
+privateRouter.get(
+    "/api/measurement-histories-doppler/device/:device_id",
+    measurementHistoriesDoppler.getByDeviceId
+);
+privateRouter.get(
+    "/api/measurement-histories-doppler/user/:user_id",
+    measurementHistoriesDoppler.getByUserId
 );
 
 // Device

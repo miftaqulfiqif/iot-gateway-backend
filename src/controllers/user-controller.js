@@ -4,7 +4,7 @@ import {
   logOutService,
   createUserService,
   getAllUserService,
-  getUserByUsernameService,
+  getDetailUserService,
 } from "../services/api/user-service.js";
 
 const create = async (req, res, next) => {
@@ -68,9 +68,9 @@ const getAllUsers = async (req, res, next) => {
   }
 };
 
-const getUserByUsername = async (req, res, next) => {
+const getDetailUser = async (req, res, next) => {
   try {
-    const result = await getUserByUsernameService(req.params.username);
+    const result = await getDetailUserService(req.params.username);
     res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -83,5 +83,5 @@ export default {
   logout,
   login,
   getAllUsers,
-  getUserByUsername,
+  getDetailUser,
 };

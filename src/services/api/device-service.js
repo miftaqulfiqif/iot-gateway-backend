@@ -4,56 +4,83 @@ import { ResponseError } from "../../errors/response-error.js";
 import { getSocketIO } from "../socket/socket-instance.js";
 import SocketRouter from "../socket/socket-router.js";
 
-
-
 export const connectDeviceBluetooth = async (device) => {
-  if (device.name === null || device.name === undefined || device.name === "") {
-    device.name = device.device;
-  }
+  try{
+    const gatewayDevice = await prismaClient.iotGateway.findUnique({
+      where: {
+        id: device.gateway_id,
+      },
+    })
 
-  // Check if mac device exist
-  const macDeviceFound = await prismaClient.deviceConnected.findUnique({
-    where: {
-      mac_address: device.mac_address,
-    },
-  });
-  if (macDeviceFound) {
-    throw new ResponseError(401, "Mac device already connected");
-  }
-
-  const deviceConnecting = await prismaClient.deviceConnected.create({
-    data: {
-      ...device,
-      is_connected: true,
-    },
-  });
-
-  //Emit MQTT
-  mqttClient.publish(
-    "iotgateway/{id-unik}/bluetooth/add_device",
-    JSON.stringify({
-      mac: device.id,
-      device_function: device.device_function,
-    }),
-    (err) => {
-      if (err) {
-        console.log("❌ MQTT publish error:", err);
-      } else {
-        console.log(
-          `✅ MQTT message published to iotgateway/{id-unik}/tcpip/add_device : ${JSON.stringify(
-            {
-              mac: device.id,
-              device_function: device.device_function,
-            }
-          )}`
-        );
-      }
+    if (!gatewayDevice) {
+      throw new ResponseError(401, "Gateway device not found");
     }
-  );
 
-  return deviceConnecting;
+    // Check if mac device exist
+    const macDeviceFound = await prismaClient.deviceConnected.findUnique({
+      where: {
+        mac_address: device.mac_address,
+      },
+    });
+    if (macDeviceFound) {
+      throw new ResponseError(401, "Mac device already connected");
+    }
+
+    // Check if name is null
+    if (device.name === null || device.name === undefined || device.name === "") {
+      device.name = device.model;
+    }
+
+    const deviceConnecting = await prismaClient.deviceConnected.create({
+      data: {
+        ...device,
+        is_connected: true,
+      },
+    });
+
+    //Emit MQTT
+    mqttClient.publish(
+        "iotgateway/{id-unik}/bluetooth/add_device",
+        JSON.stringify({
+          mac: device.id,
+          device_function: device.device_function,
+        }),
+        (err) => {
+          if (err) {
+            console.log("❌ MQTT publish error:", err);
+          } else {
+            console.log(
+                `✅ MQTT message published to iotgateway/{id-unik}/tcpip/add_device : ${JSON.stringify(
+                    {
+                      mac: device.mac_address,
+                      device_function: device.device_function,
+                    }
+                )}`
+            );
+          }
+        }
+    );
+
+    return deviceConnecting;
+  }catch (error) {
+    throw error;
+  }
 };
+
 export const connectDeviceTcpIP = async (device) => {
+
+  // Check gateway device
+  const gatewayDevice = await prismaClient.iotGateway.findUnique({
+    where: {
+      id: device.gateway_id,
+    },
+  })
+
+  if (!gatewayDevice) {
+    throw new ResponseError(401, "Gateway device not found");
+  }
+
+
   // Check if ip address device exist
   const ipAddressDeviceFound = await prismaClient.deviceConnected.findUnique({
     where: {
@@ -78,7 +105,7 @@ export const connectDeviceTcpIP = async (device) => {
         console.log(
           `✅ MQTT message published to iotgateway/{id-unik}/tcpip/add_device : ${JSON.stringify(
             {
-              ip: device.id,
+              ip: device.ip_address,
               device_function: device.device_function,
             }
           )}`
@@ -96,10 +123,11 @@ export const connectDeviceTcpIP = async (device) => {
 
   return deviceConnecting;
 };
+
 export const disconnectDeviceBluetooth = async (macDevice) => {
   // Check if mac device exist
   const device = await prismaClient.deviceConnected.findUnique({
-    where: { id: macDevice },
+    where: { mac_address: macDevice },
   });
 
   if (!device) {
@@ -125,7 +153,7 @@ export const disconnectDeviceBluetooth = async (macDevice) => {
 
   // Delete Database
   const removedDevice = await prismaClient.deviceConnected.delete({
-    where: { id: macDevice },
+    where: { mac_address: macDevice },
   });
 
   return removedDevice;
@@ -134,11 +162,11 @@ export const disconnectDeviceBluetooth = async (macDevice) => {
 export const disconnectDeviceTcpIP = async (ipDevice) => {
   // Check if mac device exist
   const device = await prismaClient.deviceConnected.findUnique({
-    where: { id: ipDevice },
+    where: { ip_address: ipDevice },
   });
 
   if (!device) {
-    throw new ResponseError(402, "Mac Device not found");
+    throw new ResponseError(401, "Mac Device not found");
   }
 
   // Publish MQTT
@@ -161,7 +189,7 @@ export const disconnectDeviceTcpIP = async (ipDevice) => {
 
   // Delete Database
   const removedDevice = await prismaClient.deviceConnected.delete({
-    where: { id: ipDevice },
+    where: { ip_address: ipDevice },
   });
 
   return removedDevice;
@@ -177,8 +205,87 @@ export const getDetailService = async (deviceId) => {
      where: { id: deviceId },
    })
 
+   if (!device) {
+     throw new ResponseError(401, "Device not found");
+   }
+
+   // Get recent practitioner use
+   const recentUsers = await prismaClient.patientHandler.findMany({
+     where: {
+       device_id: deviceId,
+     },
+     orderBy: {
+       timestamp: "desc",
+     },
+     select: {
+       id: true,
+       timestamp: true,
+       user: {
+         select: {
+           id: true, // perlu untuk filter unique
+           name: true,
+           speciality: true,
+         },
+       },
+     },
+   });
+
+   // Get measurement activity
+   const measurementActivity = await prismaClient.measurementActivity.findMany({
+     where: {
+       patient_handler: {
+         device_id: deviceId,
+       },
+     },
+     orderBy: {
+       recorded_at: "desc",
+     },
+     select: {
+       description: true,
+       recorded_at: true,
+       patient_handler: {
+         select: {
+           patient: {
+             select: {
+               id: true, // perlu untuk filter unique
+               name: true,
+             },
+           },
+         },
+       },
+     },
+   });
+
+   // Filter unique users
+   const uniqueUsers = new Map();
+   for (const userEntry of recentUsers) {
+     const user = userEntry.user;
+     if (!uniqueUsers.has(user.id)) {
+       uniqueUsers.set(user.id, {
+         name: user.name,
+         speciality: user.speciality,
+         timestamp: userEntry.timestamp,
+       });
+     }
+   }
+   
+   // Filter unique patients
+   const uniquePatients = new Map();
+   for (const entry of measurementActivity) {
+     const patient = entry.patient_handler.patient;
+     if (!uniquePatients.has(patient.id)) {
+       uniquePatients.set(patient.id, {
+         patient_name: patient.name,
+         description: entry.description,
+         recorded_at: entry.recorded_at,
+       });
+     }
+   }
+
    return {
      detail: device,
+     recent_users: Array.from(uniqueUsers.values()).slice(0, 10),
+     recent_patient_use: Array.from(uniquePatients.values()).slice(0, 10),
    };
  }catch (error) {
    throw error;
