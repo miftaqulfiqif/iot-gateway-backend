@@ -12,6 +12,7 @@ export const createService = async (user, dataMeasurement) => {
         id: dataMeasurement.device_id,
       },
     });
+
     if (!device) {
       throw new ResponseError(401, "Device not found");
     }
@@ -19,9 +20,9 @@ export const createService = async (user, dataMeasurement) => {
     // Check patient handler
     patientHandler = await prismaClient.patientHandler.findFirst({
       where: {
-        hospital_id: user.hospital_id,
         user_id: user.id,
         patient_id: dataMeasurement.patient_id,
+        device_id: dataMeasurement.device_id,
       },
     });
 
@@ -31,35 +32,47 @@ export const createService = async (user, dataMeasurement) => {
       patientHandler = await prismaClient.patientHandler.create({
         data: {
           user_id: user.id,
-          hospital_id: user.hospital_id,
           patient_id: dataMeasurement.patient_id,
+          device_id: dataMeasurement.device_id,
         },
       });
     }
 
-    // Get device name
-    const deviceName = await prismaClient.deviceConnected.findFirst({
+    // get baby
+    const baby = await prismaClient.baby.findUnique({
       where: {
-        id: dataMeasurement.device_id,
+        id: dataMeasurement.baby_id,
       },
       select: {
         name: true,
+      }
+    })
+
+    // Save Measurement Activity
+    const measurementActivity = await prismaClient.measurementActivity.create({
+      data: {
+        patient_handler_id: patientHandler.id,
+        title: `Pengukuran Berat Badan Ibu dan Anak. ${baby.name}`,
+        description: dataMeasurement.description ? dataMeasurement.description : `Hasil pengukuran berat badan Ibu : ${dataMeasurement.weight_mother} kg dan Anak : ${dataMeasurement.weight_child} kg` ,
+      }
+    })
+
+    // Create history
+    const historyMeasurement =  await prismaClient.measurementHistoriesDigitProIda.create({
+      data: {
+        baby_id: dataMeasurement.baby_id,
+        weight_mother: dataMeasurement.weight_mother,
+        weight_child: dataMeasurement.weight_child,
+        patient_handler_id: patientHandler.id,
       },
     });
 
-    // Create history
-    return await prismaClient.measurementHistoriesDigitProIda.create({
-      data: {
-        patient_handler_id: patientHandler.id,
-        ...Object.keys(dataMeasurement).reduce((object, key) => {
-          if (key !== "patient_id") {
-            object[key] = dataMeasurement[key];
-          }
-          return object;
-        }, {}),
-        name: deviceName.name,
-      },
-    });
+    return {
+      id: historyMeasurement.id,
+      weight_mother: historyMeasurement.weight_mother,
+      weight_child: historyMeasurement.weight_child,
+      description: measurementActivity.description
+    }
   } catch (error) {
     throw error;
   }
@@ -71,24 +84,48 @@ export const getAllService = async (query, page, limit, skip, patient_id) => {
 
     if (query) {
       whereCondition.OR = [
-          {
-            name: {
-              contains: query,
-              mode: "insensitive",
+        {
+          patient_handler: {
+            user: {
+              name: {
+                contains: query
+              }
             }
-          },
-          {
-            patient_handler: {
-              patient: {
-                name: {
-                  contains: query,
-                  mode: "insensitive",
+          }
+        },
+        {
+          patient_handler: {
+            device_connected: {
+              name: {
+                contains: query
+              }
+            }
+          }
+        },
+        {
+          patient_handler: {
+            patient: {
+              name: {
+                contains: query
+              }
+            }
+          }
+        },
+        {
+          patient_handler: {
+            patient: {
+              babies:  {
+                some: {
+                  name: {
+                    contains: query
+                  }
                 }
               }
             }
           }
-        ];
-      }
+        }
+      ];
+    }
 
     if (patient_id) {
       whereCondition.patient_handler = {
@@ -110,15 +147,13 @@ export const getAllService = async (query, page, limit, skip, patient_id) => {
         skip: skip,
         take: limit,
         orderBy: {
-          timestamp: "desc", // Optional: urutkan dari terbaru
+          recorded_at: "desc",
         },
         select: {
           id: true,
-          device_id: true,
-          name: true,
           weight_mother: true,
           weight_child: true,
-          timestamp: true,
+          recorded_at: true,
           patient_handler: {
             select: {
               id: true,
@@ -128,17 +163,20 @@ export const getAllService = async (query, page, limit, skip, patient_id) => {
                   name: true,
                   gender: true,
                   phone: true,
-                  work: true,
-                  last_education: true,
                   place_of_birth: true,
                   date_of_birth: true,
-                  age: true,
                 },
               },
               user: {
                 select: {
                   id: true,
                   username: true,
+                },
+              },
+              device_connected: {
+                select: {
+                  id: true,
+                  name: true,
                 },
               },
             },
@@ -179,41 +217,367 @@ export const getAllService = async (query, page, limit, skip, patient_id) => {
   }
 };
 
-export const getByPatientIdService = async (patientId) => {
+export const getByPatientIdService = async (query, page, limit, skip, patientId) => {
   try {
-    return await prismaClient.measurementHistoriesDigitProIda.findMany({
+    const whereCondition = {};
+
+    if (query) {
+      whereCondition.OR = [
+        {
+          patient_handler: {
+            user: {
+              name: {
+                contains: query
+              }
+            }
+          }
+        },
+        {
+          patient_handler: {
+            device_connected: {
+              name: {
+                contains: query
+              }
+            }
+          }
+        },
+        {
+          patient_handler: {
+            patient: {
+              babies:  {
+                some: {
+                  name: {
+                    contains: query
+                  }
+                }
+              }
+            }
+          }
+        }
+      ];
+    }
+
+    whereCondition.patient_handler = {
+      ...(whereCondition.patient_handler || {}),
+      patient: {
+        ...(whereCondition.patient_handler?.patient || {}),
+        id: patientId,
+      },
+    };
+
+    const total = await prismaClient.measurementHistoriesDigitProIda.count({
+      where: whereCondition,
+    });
+
+    const histories =
+        await prismaClient.measurementHistoriesDigitProIda.findMany({
+          where: whereCondition,
+          skip: skip,
+          take: limit,
+          orderBy: {
+            recorded_at: "desc",
+          },
+          select: {
+            id: true,
+            weight_mother: true,
+            weight_child: true,
+            recorded_at: true,
+            patient_handler: {
+              select: {
+                id: true,
+                patient: {
+                  select: {
+                    id: true,
+                    name: true,
+                    gender: true,
+                    phone: true,
+                    place_of_birth: true,
+                    date_of_birth: true,
+                  },
+                },
+                device_connected: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+    const patientIds = histories
+        .map((h) => h.patient_handler?.patient?.id)
+        .filter(Boolean);
+
+    const babies = await prismaClient.baby.findMany({
       where: {
-        patient_handler: {
-          patient_id: patientId,
+        patient_id: {
+          in: patientIds,
         },
       },
     });
+
+    const dataWithBaby = histories.map((h) => ({
+      ...h,
+      patient_handler: {
+        ...h.patient_handler,
+        baby: babies.find(
+            (b) => b.patient_id === h.patient_handler?.patient?.id
+        ),
+      },
+    }));
+
+    return {
+      total,
+      page,
+      limit,
+      data: dataWithBaby,
+    };
   } catch (error) {
     throw error;
   }
 };
 
-export const getByUserIdService = async (userId) => {
+export const getByDeviceIdService = async (query, page, limit, skip, deviceId) => {
   try {
-    return await prismaClient.measurementHistoriesDigitProIda.findMany({
+    const whereCondition = {}
+
+    if (query)  {
+      whereCondition.OR = [
+        {
+          patient_handler: {
+            user: {
+              name: {
+                contains: query
+              }
+            }
+          }
+        },
+        {
+          patient_handler: {
+            patient: {
+              name: {
+                contains: query
+              }
+            }
+          }
+        },
+        {
+          patient_handler: {
+            patient: {
+              babies:  {
+                some: {
+                  name: {
+                    contains: query
+                  }
+                }
+              }
+            }
+          }
+        }
+      ];
+    }
+
+    whereCondition.patient_handler = {
+      ...(whereCondition.patient_handler || {}),
+      device_id: deviceId,
+    };
+
+    const total = await prismaClient.measurementHistoriesDigitProIda.count({
+      where: whereCondition,
+    });
+
+    const histories =
+        await prismaClient.measurementHistoriesDigitProIda.findMany({
+          where: whereCondition,
+          skip: skip,
+          take: limit,
+          orderBy: {
+            recorded_at: "desc",
+          },
+          select: {
+            id: true,
+            weight_mother: true,
+            weight_child: true,
+            recorded_at: true,
+            patient_handler: {
+              select: {
+                id: true,
+                patient: {
+                  select: {
+                    id: true,
+                    name: true,
+                    gender: true,
+                    phone: true,
+                    place_of_birth: true,
+                    date_of_birth: true,
+                  },
+                },
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+    const patientIds = histories
+        .map((h) => h.patient_handler?.patient?.id)
+        .filter(Boolean);
+
+    const babies = await prismaClient.baby.findMany({
       where: {
-        patient_handler: {
-          user_id: userId,
+        patient_id: {
+          in: patientIds,
         },
       },
     });
+
+    const dataWithBaby = histories.map((h) => ({
+      ...h,
+      patient_handler: {
+        ...h.patient_handler,
+        baby: babies.find(
+            (b) => b.patient_id === h.patient_handler?.patient?.id
+        ),
+      },
+    }));
+
+    return {
+      total,
+      page,
+      limit,
+      data: dataWithBaby,
+    };
   } catch (error) {
     throw error;
   }
 };
 
-export const getByDeviceIdService = async (deviceId) => {
+export const getByUserIdService = async (query, page, limit, skip, userId) => {
   try {
-    return await prismaClient.measurementHistoriesDigitProIda.findMany({
+    const whereCondition = {}
+
+    if (query) {
+      whereCondition.OR = [
+        {
+          patient_handler: {
+            device_connected: {
+              name: {
+                contains: query
+              }
+            }
+          }
+        },
+        {
+          patient_handler: {
+            patient: {
+              name: {
+                contains: query
+              }
+            }
+          }
+        },
+        {
+          patient_handler: {
+            patient: {
+              babies:  {
+                some: {
+                  name: {
+                    contains: query
+                  }
+                }
+              }
+            }
+          }
+        }
+      ];
+    }
+
+    whereCondition.patient_handler = {
+      ...(whereCondition.patient_handler || {}),
+      user_id: userId,
+    };
+
+    const total = await prismaClient.measurementHistoriesDigitProIda.count({
+      where: whereCondition,
+    });
+
+    const histories =
+        await prismaClient.measurementHistoriesDigitProIda.findMany({
+          where: whereCondition,
+          skip: skip,
+          take: limit,
+          orderBy: {
+            recorded_at: "desc",
+          },
+          select: {
+            id: true,
+            weight_mother: true,
+            weight_child: true,
+            recorded_at: true,
+            patient_handler: {
+              select: {
+                id: true,
+                patient: {
+                  select: {
+                    id: true,
+                    name: true,
+                    gender: true,
+                    phone: true,
+                    place_of_birth: true,
+                    date_of_birth: true,
+                  },
+                },
+                device_connected: {
+                  select: {
+                    id: true,
+                    name: true,
+                  }
+                }
+              },
+            },
+          },
+        });
+
+    const patientIds = histories
+        .map((h) => h.patient_handler?.patient?.id)
+        .filter(Boolean);
+
+    const babies = await prismaClient.baby.findMany({
       where: {
-        device_id: deviceId,
+        patient_id: {
+          in: patientIds,
+        },
       },
     });
+
+    const dataWithBaby = histories.map((h) => ({
+      ...h,
+      patient_handler: {
+        ...h.patient_handler,
+        baby: babies.find(
+            (b) => b.patient_id === h.patient_handler?.patient?.id
+        ),
+      },
+    }));
+
+    return {
+      total,
+      page,
+      limit,
+      data: dataWithBaby,
+    };
   } catch (error) {
     throw error;
   }

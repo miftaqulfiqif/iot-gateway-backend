@@ -134,7 +134,8 @@ model DeviceConnected {
 
   gateway_id String
 
-  gateway IotGateway @relation(fields: [gateway_id], references: [id])
+  gateway         IotGateway       @relation(fields: [gateway_id], references: [id])
+  patient_handler PatientHandler[]
 
   @@map("devices_connected")
 }
@@ -153,8 +154,9 @@ model PatientHandler {
   device_id  String
   timestamp  DateTime @default(now())
 
-  user    User    @relation(fields: [user_id], references: [id])
-  patient Patient @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+  user             User            @relation(fields: [user_id], references: [id])
+  patient          Patient         @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+  device_connected DeviceConnected @relation(fields: [device_id], references: [id], onDelete: Cascade)
 
   measurement_histories_digit_pro_baby MeasurementHistoriesDigitProBaby[]
   measurement_histories_digit_pro_ida  MeasurementHistoriesDigitProIda[]
@@ -466,7 +468,7 @@ model MeasurementActivity {
   id                 String   @id @default(uuid())
   patient_handler_id String
   title              String   @db.VarChar(255)
-  description        String   @db.LongText()
+  description        String?  @db.LongText()
   recorded_at        DateTime @default(now())
 
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])

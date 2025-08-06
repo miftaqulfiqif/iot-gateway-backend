@@ -291,7 +291,7 @@ export const getAllUserService = async (
   }
 };
 
-export const getUserByUsernameService = async (username) => {
+export const getDetailUserService = async (username) => {
   try {
     const user = await prismaClient.user.findFirst({
       where: { username },
@@ -320,7 +320,7 @@ export const getUserByUsernameService = async (username) => {
         patient: {
           select: {
             name: true,
-        },
+          },
         },
         timestamp: true,
       },
