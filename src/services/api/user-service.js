@@ -226,8 +226,6 @@ export const loginService = async (request) => {
       },
     });
 
-
-
     return {
       token: updatedUser.token,
       name: updatedUser.name,
@@ -291,10 +289,12 @@ export const getAllUserService = async (
   }
 };
 
-export const getDetailUserService = async (username) => {
+export const getDetailUserService = async (userId) => {
   try {
+
+    // Get detail user
     const user = await prismaClient.user.findFirst({
-      where: { username },
+      where: { id: userId },
       include: {
         role: true,
         hospital: true,
@@ -307,9 +307,10 @@ export const getDetailUserService = async (username) => {
       throw new ResponseError(404, "User not found");
     }
 
+    // Get Recent Patient
     const allRecentHandlers = await prismaClient.patientHandler.findMany({
       where: {
-        user_id: user.id,
+        user_id: userId,
       },
       orderBy: {
         timestamp: "desc",
@@ -325,6 +326,34 @@ export const getDetailUserService = async (username) => {
         timestamp: true,
       },
     });
+
+    // Get Measurement Activity
+    const measurementActivity = await prismaClient.measurementActivity.findMany({
+      where: {
+        patient_handler: {
+          user_id: userId
+        }
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        recorded_at: true,
+        patient_handler: {
+          select: {
+            patient: {
+              select: {
+                name: true,
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        recorded_at: "desc"
+      },
+      take: 10
+    })
 
     const uniquePatients = new Map();
 
@@ -353,6 +382,13 @@ export const getDetailUserService = async (username) => {
         id: item.id,
         patient_name: item.patient?.name ?? " -- ",
         timestamp: item.timestamp,
+      })),
+      measurement_activity: measurementActivity.map((item) => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        patient_name: item.patient_handler?.patient?.name ?? " -- ",
+        recorded_at: item.recorded_at,
       })),
     };
   } catch (error) {

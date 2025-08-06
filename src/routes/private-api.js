@@ -20,7 +20,7 @@ privateRouter.post("/api/users", userController.create); // Register user
 privateRouter.get("/api/user-current", userController.currentUser); // Get current user
 privateRouter.post("/api/user-logout", userController.logout); // Logout
 privateRouter.get("/api/users", userController.getAllUsers); // Get All Users
-privateRouter.get("/api/user/:username", userController.getDetailUser); // Get User By Username
+privateRouter.get("/api/user/detail/:user_id", userController.getDetailUser); // Get User By Username
 
 // Patient
 privateRouter.post("/api/patients", patientController.create); // Create
@@ -32,6 +32,7 @@ privateRouter.get(
 privateRouter.get("/api/patients-by-user", patientController.getPatientsByUser); // Get patients by user
 privateRouter.get("/api/all-patients", patientController.getAll); // Get all
 privateRouter.get("/api/patient/:id", patientController.get); // Get
+privateRouter.get("/api/patient/detail/:patient_id", patientController.getDetailPatient); // Get
 
 //Baby
 privateRouter.get("/api/babies", babyController.getAll); // Get all

@@ -1,7 +1,7 @@
 import { logger } from "../applications/logging.js";
 import { ResponseError } from "../errors/response-error.js";
 import {
-  createPatient,
+  createPatient, getDetailPatientService,
   getPatient,
   getPatientByUserService,
   getPatients, getPatientsService,
@@ -113,6 +113,17 @@ const showBarcodeTest = async (req, res, next) => {
   }
 };
 
+const getDetailPatient = async (req, res, next) => {
+  const patientId = req.params.patient_id;
+
+  try {
+    const result = await getDetailPatientService(patientId);
+    res.status(200).json({ message: "Get detail patient successfully",data: result });
+  }catch (error) {
+    next(error);
+  }
+}
+
 export default {
   create,
   update,
@@ -121,4 +132,5 @@ export default {
   getPatientsByHospital,
   getPatientsByUser,
   showBarcodeTest,
+  getDetailPatient,
 };

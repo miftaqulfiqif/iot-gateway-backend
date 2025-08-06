@@ -69,8 +69,14 @@ const getAllUsers = async (req, res, next) => {
 };
 
 const getDetailUser = async (req, res, next) => {
+  const userId = req.params.user_id;
+
   try {
-    const result = await getDetailUserService(req.params.username);
+    if (!userId) {
+      return res.status(400).json({ message: "User id is required" });
+    }
+
+    const result = await getDetailUserService(userId);
     res.status(200).json(result);
   } catch (error) {
     next(error);

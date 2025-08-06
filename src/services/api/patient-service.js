@@ -273,6 +273,91 @@ export const getPatient = async (id) => {
   }
 };
 
+export const getDetailPatientService = async (patientId) => {
+  try {
+    // Get patient
+    const patient = await prismaClient.patient.findUnique({
+      where: {
+        id: patientId,
+      }
+    })
+
+    // Get Babies
+    const babies = await prismaClient.baby.findMany({
+      where: {
+        patient_id: patientId
+      }
+    })
+
+    // Get Recent Doctors
+    const recentDoctor = await prismaClient.measurementActivity.findMany({
+      where: {
+        patient_handler: {
+          patient_id: patientId,
+        }
+      },
+      orderBy: {
+        recorded_at: "desc"
+      },
+      select: {
+        patient_handler: {
+          select: {
+            user: {
+              select: {
+                name: true,
+                speciality: true,
+                profile_picture: true,
+              }
+            }
+          }
+        },
+        recorded_at: true,
+      }
+    })
+
+    // Get Medical Activities
+    const medicalActivities = await prismaClient.measurementActivity.findMany({
+      where: {
+        patient_handler: {
+          patient_id: patientId,
+        }
+      },
+      orderBy: {
+        recorded_at: "desc"
+      },
+      select: {
+        title: true,
+        description: true,
+        recorded_at: true,
+      },
+      take: 10
+    })
+
+    // Filter unique users
+    const uniqueUsers = new Map();
+    for (const userEntry of recentDoctor) {
+      const user = userEntry.patient_handler.user;
+      if (!uniqueUsers.has(user.id)) {
+        uniqueUsers.set(user.id, {
+          name: user.name,
+          speciality: user.speciality,
+          profile_picture: user.profile_picture,
+          recorded_at: userEntry.recorded_at
+        });
+      }
+    }
+
+    return {
+      detail: patient,
+      babies: babies,
+      recent_doctor: Array.from(uniqueUsers.values()).slice(0, 10),
+      medical_activities: medicalActivities,
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
 // Show barcode to Postman
 export const showBarcodeTestService = async (id) => {
   try {
@@ -296,8 +381,8 @@ export const showBarcodeTestService = async (id) => {
     throw error;
   }
 };
-
 //Patent ID Generator
+
 const generatePatientId = async (genderCode, age) => {
   const count = await prismaClient.patient.count();
   const numericId = String(count + 1).padStart(13, "0");

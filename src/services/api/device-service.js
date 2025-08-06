@@ -222,7 +222,7 @@ export const getDetailService = async (deviceId) => {
        timestamp: true,
        user: {
          select: {
-           id: true, // perlu untuk filter unique
+           id: true,
            name: true,
            speciality: true,
          },
@@ -247,7 +247,7 @@ export const getDetailService = async (deviceId) => {
          select: {
            patient: {
              select: {
-               id: true, // perlu untuk filter unique
+               id: true,
                name: true,
              },
            },
