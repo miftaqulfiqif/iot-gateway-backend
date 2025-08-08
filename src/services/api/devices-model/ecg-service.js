@@ -1,6 +1,6 @@
 import multer from "multer";
 import fs from "fs";
-import {ResponseError} from "../../errors/response-error.js";
+import {ResponseError} from "../../../errors/response-error.js";
 
 // create ecg directory
 const ecgDir = "./uploads/ecg";

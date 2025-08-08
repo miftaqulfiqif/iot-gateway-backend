@@ -12,10 +12,10 @@ import cookieParser from "cookie-parser";
 const port = process.env.PORT || 3000;
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://192.168.1.25:5173",
-  // "http://192.168.13.190:5173",
+  // "http://192.168.1.25:5173",
+  "http://192.168.15.234:5173",
 ];
-const mqttClient = mqtt.connect("mqtt://broker.emqx.io:1883");
+const mqttClient = mqtt.connect("mqtt://192.168.13.173");
 
 // ==== Inisialisasi ====
 const app = express();

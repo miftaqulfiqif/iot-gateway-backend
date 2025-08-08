@@ -1,8 +1,8 @@
 import express from "express";
 import userController from "../controllers/user-controller.js";
-import ecg1200gController from "../controllers/ecg1200g-controller.js";
+import ecg1200gController from "../controllers/devices-model/ecg1200g-controller.js";
 import addressController from "../controllers/address-controller.js";
-import { uploadEcg } from "../services/api/ecg-service.js";
+import { uploadEcg } from "../services/api/devices-model/ecg-service.js";
 
 const publicRouter = new express.Router();
 

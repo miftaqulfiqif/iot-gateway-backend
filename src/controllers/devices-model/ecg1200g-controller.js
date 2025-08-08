@@ -1,4 +1,4 @@
-import { uploadEcgService } from "../services/api/ecg-service.js";
+import { uploadEcgService } from "../../services/api/devices-model/ecg-service.js";
 
 const uploadEcg = async (req, res) => {
   try {
