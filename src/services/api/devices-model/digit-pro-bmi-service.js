@@ -33,6 +33,17 @@ export const createService = async (user, dataMeasurement) => {
                     device_id: dataMeasurement.device_id,
                 }
             })
+        } else {
+            await prismaClient.patientHandler.update({
+                where:{
+                    id: patientHandler.id
+                },
+                data: {
+                    user_id: patientHandler.user_id,
+                    patient_id: patientHandler.patient_id,
+                    device_id: patientHandler.device_id,
+                }
+            })
         }
 
         // Save Measurement Activity
