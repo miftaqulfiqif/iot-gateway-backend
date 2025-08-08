@@ -1,5 +1,5 @@
-import { prismaClient } from "../../applications/database.js";
-import { ResponseError } from "../../errors/response-error.js";
+import { prismaClient } from "../../../applications/database.js";
+import { ResponseError } from "../../../errors/response-error.js";
 
 // create
 export const createService = async (user, dataMeasurement) => {
@@ -37,15 +37,15 @@ export const createService = async (user, dataMeasurement) => {
       });
     } else {
       await prismaClient.patientHandler.update({
-        where:{
-          id: patientHandler.id
+        where: {
+          id: patientHandler.id,
         },
         data: {
           user_id: patientHandler.user_id,
           patient_id: patientHandler.patient_id,
           device_id: patientHandler.device_id,
-        }
-      })
+        },
+      });
     }
 
     // Save Measurement Activity
@@ -53,20 +53,45 @@ export const createService = async (user, dataMeasurement) => {
       data: {
         patient_handler_id: patientHandler.id,
         title: `Pengukuran Doppler`,
-        description: dataMeasurement.description ? dataMeasurement.description : `Hasil pengukuran heart rate : ${dataMeasurement.heart_rate} bpm` ,
+        description: dataMeasurement.description
+          ? dataMeasurement.description
+          : `Hasil pengukuran heart rate : ${dataMeasurement.heart_rate} bpm`,
       },
       select: {
         id: true,
         title: true,
         description: true,
-      }
-    })
+      },
+    });
 
     // Create history
-    const historyMeasurement = await prismaClient.measurementHistoriesDoppler.create({
-      data: {
-        patient_handler_id: patientHandler.id,
-        heart_rate: dataMeasurement.heart_rate,
+    const result = await prismaClient.$transaction([
+      prismaClient.measurementHistoriesDoppler.create({
+        data: {
+          patient_handler_id: patientHandler.id,
+          heart_rate: dataMeasurement.heart_rate,
+        },
+      }),
+      prismaClient.deviceConnected.update({
+        where: {
+          id: device.id,
+        },
+        data: {
+          count_used: {
+            increment: 1,
+          },
+        },
+      }),
+    ]);
+
+    const historyMeasurement = result[0];
+
+    const deviceUpdate = await prismaClient.deviceConnected.findUnique({
+      where: {
+        id: device.id,
+      },
+      select: {
+        count_used: true,
       },
     });
 
@@ -74,7 +99,8 @@ export const createService = async (user, dataMeasurement) => {
       id: historyMeasurement.id,
       heart_rate: historyMeasurement.heart_rate,
       description: measurementActivity.description,
-    }
+      count_used: deviceUpdate.count_used,
+    };
   } catch (error) {
     throw error;
   }
@@ -90,29 +116,29 @@ export const getAllService = async (query, page, limit, skip, patient_id) => {
           patient_handler: {
             user: {
               name: {
-                contains: query
-              }
-            }
-          }
+                contains: query,
+              },
+            },
+          },
         },
         {
           patient_handler: {
             device_connected: {
               name: {
-                contains: query
-              }
-            }
-          }
+                contains: query,
+              },
+            },
+          },
         },
         {
           patient_handler: {
             patient: {
               name: {
-                contains: query
-              }
-            }
-          }
-        }
+                contains: query,
+              },
+            },
+          },
+        },
       ];
     }
 
@@ -122,194 +148,22 @@ export const getAllService = async (query, page, limit, skip, patient_id) => {
         patient: {
           ...(whereCondition.patient_handler?.patient || {}),
           id: patient_id,
-        }
+        },
       };
     }
 
     const total = await prismaClient.measurementHistoriesDoppler.count({
-      where: whereCondition
-    })
-
-    const histories =
-        await prismaClient.measurementHistoriesDoppler.findMany({
-          where: whereCondition,
-          skip: skip,
-          take: limit,
-          orderBy: {
-            recorded_at: "desc"
-          },
-          select:{
-            id: true,
-            heart_rate: true,
-            recorded_at: true,
-            patient_handler: {
-              select: {
-                id: true,
-                patient: {
-                  select: {
-                    id: true,
-                    name: true,
-                    gender: true,
-                    phone: true,
-                    place_of_birth: true,
-                    date_of_birth: true,
-                  }
-                },
-                user: {
-                  select: {
-                    id: true,
-                    username: true,
-                  }
-                },
-                device_connected: {
-                  select: {
-                    id: true,
-                    name: true,
-                    mac_address: true,
-                  }
-                }
-              }
-            }
-          }
-        })
-
-    return {
-      total,
-      page,
-      limit,
-      data: histories
-    }
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const getByPatientIdService = async (query, page, limit, skip, patientId) => {
-  try {
-    const whereCondition = {};
-
-    if (query) {
-      whereCondition.OR = [
-        {
-          patient_handler: {
-            user: {
-              name: {
-                contains: query
-              }
-            }
-          }
-        },
-        {
-          patient_handler: {
-            device_connected: {
-              name: {
-                contains: query
-              }
-            }
-          }
-        },
-      ];
-    }
-
-    whereCondition.patient_handler = {
-      ...(whereCondition.patient_handler || {}),
-      patient: {
-        ...(whereCondition.patient_handler?.patient || {}),
-        id: patientId,
-      }
-    }
-
-    const total = await prismaClient.measurementHistoriesDoppler.count({
-      where: whereCondition
-    })
-
-    const histroies = await prismaClient.measurementHistoriesDoppler.findMany({
       where: whereCondition,
-      skip: skip,
-      take: limit,
-      orderBy: {
-        recorded_at: "desc"
-      },
-      select:{
-        id: true,
-        heart_rate: true,
-        recorded_at: true,
-        patient_handler: {
-          select: {
-            id: true,
-            user: {
-              select: {
-                id: true,
-                username: true,
-              }
-            },
-            device_connected: {
-              select: {
-                id: true,
-                name: true,
-                mac_address: true,
-              }
-            }
-          }
-        }
-      }
-    })
-
-    return {
-      total,
-      page,
-      limit,
-      data: histroies
-    }
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const getByDeviceIdService = async (query, page, limit, skip, deviceId) => {
-  try {
-    const whereCondition = {}
-
-    if (query) {
-      whereCondition.OR = [
-        {
-          patient_handler: {
-            user: {
-              name: {
-                contains: query
-              }
-            }
-          }
-        },
-        {
-          patient_handler: {
-            patient: {
-              name: {
-                contains: query
-              }
-            }
-          }
-        }
-      ];
-    }
-
-    whereCondition.patient_handler = {
-      ...(whereCondition.patient_handler || {}),
-      device_id: deviceId
-    }
-
-    const total = await prismaClient.measurementHistoriesDoppler.count({
-      where: whereCondition
-    })
+    });
 
     const histories = await prismaClient.measurementHistoriesDoppler.findMany({
       where: whereCondition,
       skip: skip,
       take: limit,
       orderBy: {
-        recorded_at: "desc"
+        recorded_at: "desc",
       },
-      select:{
+      select: {
         id: true,
         heart_rate: true,
         recorded_at: true,
@@ -324,33 +178,216 @@ export const getByDeviceIdService = async (query, page, limit, skip, deviceId) =
                 phone: true,
                 place_of_birth: true,
                 date_of_birth: true,
-              }
+              },
             },
             user: {
               select: {
                 id: true,
                 username: true,
-              }
+              },
             },
-          }
-        }
-      }
-    })
+            device_connected: {
+              select: {
+                id: true,
+                name: true,
+                mac_address: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
     return {
       total,
       page,
       limit,
-      data: histories
-    }
+      data: histories,
+    };
   } catch (error) {
     throw error;
   }
-}
+};
+
+export const getByPatientIdService = async (
+  query,
+  page,
+  limit,
+  skip,
+  patientId
+) => {
+  try {
+    const whereCondition = {};
+
+    if (query) {
+      whereCondition.OR = [
+        {
+          patient_handler: {
+            user: {
+              name: {
+                contains: query,
+              },
+            },
+          },
+        },
+        {
+          patient_handler: {
+            device_connected: {
+              name: {
+                contains: query,
+              },
+            },
+          },
+        },
+      ];
+    }
+
+    whereCondition.patient_handler = {
+      ...(whereCondition.patient_handler || {}),
+      patient: {
+        ...(whereCondition.patient_handler?.patient || {}),
+        id: patientId,
+      },
+    };
+
+    const total = await prismaClient.measurementHistoriesDoppler.count({
+      where: whereCondition,
+    });
+
+    const histroies = await prismaClient.measurementHistoriesDoppler.findMany({
+      where: whereCondition,
+      skip: skip,
+      take: limit,
+      orderBy: {
+        recorded_at: "desc",
+      },
+      select: {
+        id: true,
+        heart_rate: true,
+        recorded_at: true,
+        patient_handler: {
+          select: {
+            id: true,
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+            device_connected: {
+              select: {
+                id: true,
+                name: true,
+                mac_address: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return {
+      total,
+      page,
+      limit,
+      data: histroies,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getByDeviceIdService = async (
+  query,
+  page,
+  limit,
+  skip,
+  deviceId
+) => {
+  try {
+    const whereCondition = {};
+
+    if (query) {
+      whereCondition.OR = [
+        {
+          patient_handler: {
+            user: {
+              name: {
+                contains: query,
+              },
+            },
+          },
+        },
+        {
+          patient_handler: {
+            patient: {
+              name: {
+                contains: query,
+              },
+            },
+          },
+        },
+      ];
+    }
+
+    whereCondition.patient_handler = {
+      ...(whereCondition.patient_handler || {}),
+      device_id: deviceId,
+    };
+
+    const total = await prismaClient.measurementHistoriesDoppler.count({
+      where: whereCondition,
+    });
+
+    const histories = await prismaClient.measurementHistoriesDoppler.findMany({
+      where: whereCondition,
+      skip: skip,
+      take: limit,
+      orderBy: {
+        recorded_at: "desc",
+      },
+      select: {
+        id: true,
+        heart_rate: true,
+        recorded_at: true,
+        patient_handler: {
+          select: {
+            id: true,
+            patient: {
+              select: {
+                id: true,
+                name: true,
+                gender: true,
+                phone: true,
+                place_of_birth: true,
+                date_of_birth: true,
+              },
+            },
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return {
+      total,
+      page,
+      limit,
+      data: histories,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const getByUserIdService = async (query, page, limit, skip, userId) => {
   try {
-    const whereCondition = {}
+    const whereCondition = {};
 
     if (query) {
       whereCondition.OR = [
@@ -358,20 +395,20 @@ export const getByUserIdService = async (query, page, limit, skip, userId) => {
           patient_handler: {
             device_connected: {
               name: {
-                contains: query
-              }
-            }
-          }
+                contains: query,
+              },
+            },
+          },
         },
         {
           patient_handler: {
             patient: {
               name: {
-                contains: query
-              }
-            }
-          }
-        }
+                contains: query,
+              },
+            },
+          },
+        },
       ];
     }
 
@@ -389,9 +426,9 @@ export const getByUserIdService = async (query, page, limit, skip, userId) => {
       skip: skip,
       take: limit,
       orderBy: {
-        recorded_at: "desc"
+        recorded_at: "desc",
       },
-      select:{
+      select: {
         id: true,
         heart_rate: true,
         recorded_at: true,
@@ -406,27 +443,27 @@ export const getByUserIdService = async (query, page, limit, skip, userId) => {
                 phone: true,
                 place_of_birth: true,
                 date_of_birth: true,
-              }
+              },
             },
             device_connected: {
               select: {
                 id: true,
                 name: true,
                 mac_address: true,
-              }
-            }
-          }
-        }
-      }
-    })
+              },
+            },
+          },
+        },
+      },
+    });
 
     return {
       total,
       page,
       limit,
-      data: histories
-    }
+      data: histories,
+    };
   } catch (error) {
     throw error;
   }
-}
+};

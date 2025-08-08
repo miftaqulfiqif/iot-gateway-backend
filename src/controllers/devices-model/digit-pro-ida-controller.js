@@ -4,7 +4,7 @@ import {
   getByPatientIdService,
   getByDeviceIdService,
   getByUserIdService,
-} from "../services/api/digit-pro-ida-service.js";
+} from "../../services/api/devices-model/digit-pro-ida-service.js";
 
 const create = async (req, res, next) => {
   try {

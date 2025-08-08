@@ -4,13 +4,15 @@ import userController from "../controllers/user-controller.js";
 import patientController from "../controllers/patient-controller.js";
 import babyController from "../controllers/baby-controller.js";
 import measurementHistoriesController from "../controllers/measurement-histories-controller.js";
-import measurementHistoriesDigitProBabyController from "../controllers/digit-pro-baby-controller.js";
-import measurementHistoriesDigitProIdaController from "../controllers/digit-pro-ida-controller.js";
-import measurementHistoriesDigitProBmiController from "../controllers/digit-pro-bmi-controller.js";
-import measurementHistoriesDoppler from "../controllers/doppler-controller.js";
+import measurementHistoriesDigitProBabyController from "../controllers/devices-model/digit-pro-baby-controller.js";
+import measurementHistoriesDigitProIdaController from "../controllers/devices-model/digit-pro-ida-controller.js";
+import measurementHistoriesDigitProBmiController from "../controllers/devices-model/digit-pro-bmi-controller.js";
+import measurementHistoriesDoppler from "../controllers/devices-model/doppler-controller.js";
 import deviceController from "../controllers/device-controller.js";
 import measurementActivityController from "../controllers/measurement-activity-controller.js";
 import iotGatewayController from "../controllers/iot-gateway-controller.js";
+import pm9000Controller from "../controllers/devices-model/pm-9000-controller.js";
+import ds001Controller from "../controllers/devices-model/ds-001-controller.js";
 
 const privateRouter = new express.Router();
 privateRouter.use(authMiddleware);
@@ -25,14 +27,14 @@ privateRouter.get("/api/user/detail/:user_id", userController.getDetailUser); //
 // Patient
 privateRouter.post("/api/patients", patientController.create); // Create
 privateRouter.patch("/api/patient-update/:id", patientController.update); // Update
-privateRouter.get(
-  "/api/patients",
-  patientController.getPatientsByHospital
-); // Get patients by hospital
+privateRouter.get("/api/patients", patientController.getPatientsByHospital); // Get patients by hospital
 privateRouter.get("/api/patients-by-user", patientController.getPatientsByUser); // Get patients by user
 privateRouter.get("/api/all-patients", patientController.getAll); // Get all
 privateRouter.get("/api/patient/:id", patientController.get); // Get
-privateRouter.get("/api/patient/detail/:patient_id", patientController.getDetailPatient); // Get
+privateRouter.get(
+  "/api/patient/detail/:patient_id",
+  patientController.getDetailPatient
+); // Get
 
 //Baby
 privateRouter.get("/api/babies", babyController.getAll); // Get all
@@ -40,11 +42,17 @@ privateRouter.get("/api/baby/:patient_id", babyController.getByNikParent); // Ge
 privateRouter.post("/api/babies", babyController.create); // Create
 
 // Iot Gatewy
-privateRouter.post("/api/iot-gateways", iotGatewayController.createNewIotGateway);
-privateRouter.get("/api/iot-gateways", iotGatewayController.getIotGateways)
+privateRouter.post(
+  "/api/iot-gateways",
+  iotGatewayController.createNewIotGateway
+);
+privateRouter.get("/api/iot-gateways", iotGatewayController.getIotGateways);
 
 // Measurement Activity
-privateRouter.post("/api/measurement-activity", measurementActivityController.createNewMeasurementActivity) // Create new measurement activity
+privateRouter.post(
+  "/api/measurement-activity",
+  measurementActivityController.createNewMeasurementActivity
+); // Create new measurement activity
 
 // Show barcode patient
 privateRouter.get(
@@ -132,12 +140,12 @@ privateRouter.get(
   measurementHistoriesDigitProBmiController.getByPatientId
 ); // Get By Patient ID
 privateRouter.get(
-    "/api/measurement-histories-digit-pro-bmi/device/:device_id",
-    measurementHistoriesDigitProBmiController.getByDeviceId
+  "/api/measurement-histories-digit-pro-bmi/device/:device_id",
+  measurementHistoriesDigitProBmiController.getByDeviceId
 ); // Get By Device ID
 privateRouter.get(
-    "/api/measurement-histories-digit-pro-bmi/user/:user_id",
-    measurementHistoriesDigitProBmiController.getByUserId
+  "/api/measurement-histories-digit-pro-bmi/user/:user_id",
+  measurementHistoriesDigitProBmiController.getByUserId
 ); // Get By User ID
 
 // Measurement Histories Doppler
@@ -150,17 +158,26 @@ privateRouter.get(
   measurementHistoriesDoppler.getAll
 );
 privateRouter.get(
-    "/api/measurement-histories-doppler/patient/:patient_id",
-    measurementHistoriesDoppler.getByPatientId
+  "/api/measurement-histories-doppler/patient/:patient_id",
+  measurementHistoriesDoppler.getByPatientId
 );
 privateRouter.get(
-    "/api/measurement-histories-doppler/device/:device_id",
-    measurementHistoriesDoppler.getByDeviceId
+  "/api/measurement-histories-doppler/device/:device_id",
+  measurementHistoriesDoppler.getByDeviceId
 );
 privateRouter.get(
-    "/api/measurement-histories-doppler/user/:user_id",
-    measurementHistoriesDoppler.getByUserId
+  "/api/measurement-histories-doppler/user/:user_id",
+  measurementHistoriesDoppler.getByUserId
 );
+
+// Measurement PM 9000
+privateRouter.post(
+  "/api/measurement-histories-pm-9000",
+  pm9000Controller.create
+);
+
+// Measurement DS 001
+privateRouter.post("/api/measurement-histories-ds-001", ds001Controller.create);
 
 // Device
 privateRouter.post(
@@ -168,7 +185,12 @@ privateRouter.post(
   deviceController.connectBluetooth
 ); // Connect device
 privateRouter.post("/api/devices/connect-tcpip", deviceController.connectTcpIP); // Connect device tcp-ip
-privateRouter.get("/api/devices", deviceController.get); // Get all device connected
+privateRouter.post("/api/devices/connect-usb", deviceController.connectUsb); // Connect device tcp-ip
+privateRouter.get("/api/devices", deviceController.get); // Get all device
+privateRouter.get(
+  "/api/devices-connected",
+  deviceController.getDevicesConnected
+); // Get all device connected
 privateRouter.get("/api/detail-device/:device_id", deviceController.getDetail); // Get all device connected
 privateRouter.delete(
   "/api/devices/disconnect-ble/:mac",
@@ -178,5 +200,9 @@ privateRouter.delete(
   "/api/devices/disconnect-tcpip/:ip",
   deviceController.disconnectTcpIP
 ); // Disconnect device
+privateRouter.delete(
+  "/api/device/delete/:device_id",
+  deviceController.deleteDevice
+);
 
 export { privateRouter };

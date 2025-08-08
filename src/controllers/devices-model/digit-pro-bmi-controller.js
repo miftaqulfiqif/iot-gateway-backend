@@ -1,4 +1,4 @@
-import {createService, getAllService, getByPatientIdService, getByDeviceIdService, getByUserIdService} from "../services/api/digit-pro-bmi-service.js";
+import {createService, getAllService, getByPatientIdService, getByDeviceIdService, getByUserIdService} from "../../services/api/devices-model/digit-pro-bmi-service.js";
 
 const create = async (req, res, next) => {
     try {

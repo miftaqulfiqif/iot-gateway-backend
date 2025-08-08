@@ -32,7 +32,7 @@ export const getRegenciesService = async (code, name) => {
         const whereClause = {};
 
         if (code) {
-            whereClause.id = {
+            whereClause.province_id = {
                 contains: code,
             };
         }
@@ -59,7 +59,7 @@ export const getDistrictsService = async (code, name) => {
         const whereClause = {};
 
         if (code) {
-            whereClause.id = {
+            whereClause.regency_id = {
                 contains: code,
             };
         }
@@ -86,7 +86,7 @@ export const getVillagesService = async (code, name) => {
         const whereClause = {};
 
         if (code) {
-            whereClause.id = {
+            whereClause.district_id = {
                 contains: code,
             };
         }

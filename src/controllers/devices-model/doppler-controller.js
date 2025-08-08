@@ -1,4 +1,4 @@
-import {createService, getAllService, getByPatientIdService, getByUserIdService, getByDeviceIdService} from "../services/api/doppler-service.js";
+import {createService, getAllService, getByPatientIdService, getByUserIdService, getByDeviceIdService} from "../../services/api/devices-model/doppler-service.js";
 
 const create = async (req, res, next) => {
     try {

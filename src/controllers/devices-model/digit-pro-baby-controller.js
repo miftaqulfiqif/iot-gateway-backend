@@ -4,7 +4,7 @@ import {
   getByPatientIdService,
   getByDeviceIdService,
   getByUserIdService,
-} from "../services/api/digit-pro-baby-service.js";
+} from "../../services/api/devices-model/digit-pro-baby-service.js";
 const create = async (req, res, next) => {
   try {
     const result = await createService(req.user, req.body);

@@ -4,7 +4,10 @@ import {
   disconnectDeviceBluetooth,
   disconnectDeviceTcpIP,
   getDevices,
+  getDevicesConnectedService,
   getDetailService,
+  deleteDeviceService,
+  connectDeviceUsbService,
 } from "../services/api/device-service.js";
 
 const connectBluetooth = async (req, res, next) => {
@@ -17,6 +20,16 @@ const connectBluetooth = async (req, res, next) => {
     next(error);
   }
 };
+
+const deleteDevice = async (req, res, next) => {
+  try {
+    const deviceDeleting = await deleteDeviceService(req.params.device_id);
+    res.status(200).json({ message: "Device deleted", data: deviceDeleting });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const connectTcpIP = async (req, res, next) => {
   try {
     const device = req.body;
@@ -28,6 +41,15 @@ const connectTcpIP = async (req, res, next) => {
     next(error);
   }
 };
+const connectUsb = async (req, res, next) => {
+  try{
+    const result = await connectDeviceUsbService(req.body);
+    res.status(200).json({ message: "Device connected", data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
 const disconnectBluetooth = async (req, res, next) => {
   try {
     const deviceDisconnecting = await disconnectDeviceBluetooth(req.params.mac);
@@ -57,6 +79,15 @@ const get = async (req, res, next) => {
   }
 };
 
+const getDevicesConnected = async (req, res, next) => {
+  try {
+    const devices = await getDevicesConnectedService();
+    res.status(200).json({ message: "Get device success", data: devices });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getDetail = async (req, res, next) => {
   try {
     const deviceId = req.params.device_id;
@@ -65,13 +96,16 @@ const getDetail = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-}
+};
 
 export default {
   connectBluetooth,
   connectTcpIP,
   disconnectBluetooth,
   disconnectTcpIP,
+  connectUsb,
   get,
-  getDetail
+  getDevicesConnected,
+  getDetail,
+  deleteDevice,
 };

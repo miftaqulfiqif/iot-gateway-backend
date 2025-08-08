@@ -121,6 +121,23 @@ export const getPatientsService = async (
       orderBy: {
         id: "desc",
       },
+      include: {
+        address: {
+          select: {
+            use: true,
+            line: true,
+            city: true,
+            postal_code: true,
+            country: true,
+            rt: true,
+            rw: true,
+            province: true,
+            regency: true,
+            district: true,
+            village: true,
+          }
+        }
+      }
     });
 
     return {
