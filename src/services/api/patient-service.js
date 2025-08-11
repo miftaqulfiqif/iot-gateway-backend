@@ -6,8 +6,30 @@ import { ResponseError } from "../../errors/response-error.js";
 // Create new patient
 export const createPatient = async (user, patient) => {
   try {
-    const {name, gender, date_of_birth, nik, no_kk, ihs_number, phone, place_of_birth, address} = patient;
-    const {use, line, city, postal_code, country, rt, rw, province_id, regency_id, district_id, village_id} = address;
+    const {
+      name,
+      gender,
+      date_of_birth,
+      nik,
+      no_kk,
+      ihs_number,
+      phone,
+      place_of_birth,
+      address,
+    } = patient;
+    const {
+      use,
+      line,
+      city,
+      postal_code,
+      country,
+      rt,
+      rw,
+      province_id,
+      regency_id,
+      district_id,
+      village_id,
+    } = address;
 
     const nikFound = await prismaClient.patient.findUnique({
       where: { nik: nik },
@@ -19,12 +41,11 @@ export const createPatient = async (user, patient) => {
     if (ihs_number) {
       const patientIhsNumberFound = await prismaClient.patient.findFirst({
         where: { ihs_number: ihs_number },
-      })
+      });
       if (patientIhsNumberFound) {
         throw new ResponseError(400, "IHS Number already exist");
       }
     }
-
 
     // Generate age
     const age = generateAge(date_of_birth);
@@ -76,31 +97,25 @@ export const createPatient = async (user, patient) => {
             regency_id: regency_id,
             district_id: district_id,
             village_id: village_id,
-          }
-        }
+          },
+        },
       },
       include: {
-        address: true
-      }
+        address: true,
+      },
     });
 
     return {
       ...newPatient,
-      address: newPatient.address
-
-    }
+      address: newPatient.address,
+    };
   } catch (error) {
     throw error;
   }
 };
 
 // Pagination patient by hospital
-export const getPatientsService = async (
-  page,
-  limit,
-  skip,
-  query
-) => {
+export const getPatientsService = async (page, limit, skip, query) => {
   try {
     const searchCondition = query
       ? {
@@ -135,9 +150,9 @@ export const getPatientsService = async (
             regency: true,
             district: true,
             village: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     return {
@@ -224,12 +239,6 @@ export const updatePatientService = async (patientId, body) => {
     if (body.phone) {
       data.phone = body.phone;
     }
-    if (body.work) {
-      data.work = body.work;
-    }
-    if (body.last_education) {
-      data.last_education = body.last_education;
-    }
     if (body.place_of_birth) {
       data.place_of_birth = body.place_of_birth;
     }
@@ -252,8 +261,6 @@ export const updatePatientService = async (patientId, body) => {
         name: true,
         gender: true,
         phone: true,
-        work: true,
-        last_education: true,
         place_of_birth: true,
         date_of_birth: true,
         height: true,
@@ -270,7 +277,7 @@ export const getPatients = async () => {
     return await prismaClient.patient.findMany({
       orderBy: {
         created_at: "desc",
-      }
+      },
     });
   } catch (error) {
     throw error;
@@ -296,25 +303,25 @@ export const getDetailPatientService = async (patientId) => {
     const patient = await prismaClient.patient.findUnique({
       where: {
         id: patientId,
-      }
-    })
+      },
+    });
 
     // Get Babies
     const babies = await prismaClient.baby.findMany({
       where: {
-        patient_id: patientId
-      }
-    })
+        patient_id: patientId,
+      },
+    });
 
     // Get Recent Doctors
     const recentDoctor = await prismaClient.measurementActivity.findMany({
       where: {
         patient_handler: {
           patient_id: patientId,
-        }
+        },
       },
       orderBy: {
-        recorded_at: "desc"
+        recorded_at: "desc",
       },
       select: {
         patient_handler: {
@@ -324,31 +331,31 @@ export const getDetailPatientService = async (patientId) => {
                 name: true,
                 speciality: true,
                 profile_picture: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         recorded_at: true,
-      }
-    })
+      },
+    });
 
     // Get Medical Activities
     const medicalActivities = await prismaClient.measurementActivity.findMany({
       where: {
         patient_handler: {
           patient_id: patientId,
-        }
+        },
       },
       orderBy: {
-        recorded_at: "desc"
+        recorded_at: "desc",
       },
       select: {
         title: true,
         description: true,
         recorded_at: true,
       },
-      take: 10
-    })
+      take: 10,
+    });
 
     // Filter unique users
     const uniqueUsers = new Map();
@@ -359,7 +366,7 @@ export const getDetailPatientService = async (patientId) => {
           name: user.name,
           speciality: user.speciality,
           profile_picture: user.profile_picture,
-          recorded_at: userEntry.recorded_at
+          recorded_at: userEntry.recorded_at,
         });
       }
     }
@@ -373,7 +380,7 @@ export const getDetailPatientService = async (patientId) => {
   } catch (error) {
     throw error;
   }
-}
+};
 
 // Show barcode to Postman
 export const showBarcodeTestService = async (id) => {
