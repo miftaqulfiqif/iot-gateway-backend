@@ -10,6 +10,7 @@ import ListenDoppler from "./mqtt/handlers/listen-doppler.js";
 import ListenPm9000 from "./mqtt/handlers/listen-pm9000.js";
 import ListenPm9000Nibp from "./mqtt/handlers/listen-pm9000_nibp.js";
 import ListenDs001 from "./mqtt/handlers/listen-ds001.js";
+import ListenDs001Pleth from "./mqtt/handlers/listen-ds001-pleth.js";
 
 const mqttRouter = new MqttRouter(mqttClient, io);
 mqttRouter.registerHandler(FoundDevicesHandler);
@@ -22,5 +23,6 @@ mqttRouter.registerHandler(ListenDoppler);
 mqttRouter.registerHandler(ListenPm9000);
 mqttRouter.registerHandler(ListenPm9000Nibp);
 mqttRouter.registerHandler(ListenDs001);
+mqttRouter.registerHandler(ListenDs001Pleth);
 
 mqttRouter.init();

@@ -16,7 +16,7 @@ const allowedOrigins = [
   "http://192.168.15.234:5173",
   "http://192.168.13.190:5173",
 ];
-const mqttClient = mqtt.connect("mqtt://192.168.13.173");
+const mqttClient = mqtt.connect("mqtt://broker.emqx.io");
 
 // ==== Inisialisasi ====
 const app = express();

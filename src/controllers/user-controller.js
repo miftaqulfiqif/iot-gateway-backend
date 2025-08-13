@@ -5,6 +5,7 @@ import {
   createUserService,
   getAllUserService,
   getDetailUserService,
+  changeGatewayService,
 } from "../services/api/user-service.js";
 
 const create = async (req, res, next) => {
@@ -59,9 +60,7 @@ const getAllUsers = async (req, res, next) => {
   const skip = (page - 1) * limit;
 
   try {
-    const result = await getAllUserService(
-        page, limit, skip, query
-    );
+    const result = await getAllUserService(page, limit, skip, query);
     res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -83,6 +82,15 @@ const getDetailUser = async (req, res, next) => {
   }
 };
 
+const changeGateway = async (req, res, next) => {
+  try {
+    const result = await changeGatewayService(req.user.id, req.body.gateway_id);
+    res.status(200).json({ message: "User gateway changed", data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   create,
   currentUser,
@@ -90,4 +98,5 @@ export default {
   login,
   getAllUsers,
   getDetailUser,
+  changeGateway,
 };

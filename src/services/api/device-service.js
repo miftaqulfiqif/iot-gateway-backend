@@ -1,8 +1,6 @@
 import { mqttClient } from "../../applications/app.js";
 import { prismaClient } from "../../applications/database.js";
 import { ResponseError } from "../../errors/response-error.js";
-import { getSocketIO } from "../socket/socket-instance.js";
-import SocketRouter from "../socket/socket-router.js";
 
 export const connectDeviceBluetooth = async (device) => {
   try {
@@ -16,14 +14,15 @@ export const connectDeviceBluetooth = async (device) => {
       throw new ResponseError(401, "Gateway device not found");
     }
 
-    // Check if mac device exist
-    const macDeviceFound = await prismaClient.deviceConnected.findUnique({
+    // Check if mac address device exist
+    const macAddressDeviceFound = await prismaClient.deviceConnected.findFirst({
       where: {
         mac_address: device.mac_address,
+        gateway_id: device.gateway_id,
       },
     });
-    if (macDeviceFound) {
-      throw new ResponseError(401, "Mac device already connected");
+    if (macAddressDeviceFound) {
+      throw new ResponseError(400, "Mac address device already exist");
     }
 
     // Check if name is null
@@ -84,9 +83,10 @@ export const connectDeviceTcpIP = async (device) => {
   }
 
   // Check if ip address device exist
-  const ipAddressDeviceFound = await prismaClient.deviceConnected.findUnique({
+  const ipAddressDeviceFound = await prismaClient.deviceConnected.findFirst({
     where: {
       ip_address: device.ip_address,
+      gateway_id: device.gateway_id,
     },
   });
   if (ipAddressDeviceFound) {
@@ -248,7 +248,7 @@ export const disconnectDeviceBluetooth = async (macDevice) => {
 
 export const disconnectDeviceTcpIP = async (ipDevice) => {
   // Check if mac device exist
-  const device = await prismaClient.deviceConnected.findUnique({
+  const device = await prismaClient.deviceConnected.findFirst({
     where: { ip_address: ipDevice },
   });
 
@@ -276,22 +276,39 @@ export const disconnectDeviceTcpIP = async (ipDevice) => {
 
   // Delete Database
   const removedDevice = await prismaClient.deviceConnected.delete({
-    where: { ip_address: ipDevice },
+    where: { id: device.id },
   });
 
   return removedDevice;
 };
 
-export const getDevices = async () => {
+export const getDevices = async (gatewayId) => {
+  if (gatewayId) {
+    return await prismaClient.deviceConnected.findMany({
+      where: {
+        gateway_id: gatewayId,
+      },
+    });
+  }
   return await prismaClient.deviceConnected.findMany();
 };
 
-export const getDevicesConnectedService = async () => {
-  return await prismaClient.deviceConnected.findMany({
-    where: {
-      is_connected: true,
-    },
-  });
+export const getDevicesConnectedService = async (gatewayId) => {
+  // Get device connected
+  if (gatewayId) {
+    return await prismaClient.deviceConnected.findMany({
+      where: {
+        gateway_id: gatewayId,
+        is_connected: true,
+      },
+    });
+  } else {
+    return await prismaClient.deviceConnected.findMany({
+      where: {
+        is_connected: true,
+      },
+    });
+  }
 };
 
 export const getDetailService = async (deviceId) => {

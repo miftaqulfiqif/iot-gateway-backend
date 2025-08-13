@@ -79,10 +79,12 @@ model User {
 
   role_id     String
   hospital_id String
+  gateway_id  String?
 
   hospital Hospital @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
   role     Role     @relation(fields: [role_id], references: [id], onDelete: Cascade)
   address  Address  @relation(fields: [address_id], references: [id])
+  gateway  IotGateway? @relation(fields: [gateway_id], references: [id])
 
   patient_handler PatientHandler[]
   activity_log    ActivityLogs[]
@@ -102,6 +104,7 @@ model IotGateway {
 
   hospital         Hospital          @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
   device_connected DeviceConnected[]
+  user             User[]
 
   @@map("iot_gateways")
 }
@@ -119,9 +122,9 @@ model ProfilePicture {
 
 model DeviceConnected {
   id              String         @id @default(uuid())
-  mac_address     String?        @unique
-  ip_address      String?        @unique
-  serial_number   String?        @unique
+  mac_address     String?        
+  ip_address      String?        
+  serial_number   String?        
   name            String         @db.VarChar(255)
   model           String         @db.VarChar(100)
   device_function String         @db.VarChar(100)
