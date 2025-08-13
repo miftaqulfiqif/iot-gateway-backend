@@ -149,7 +149,7 @@ export const currentUserService = async (username) => {
             logo_path: true,
             satu_sehat_env: {
               select: {
-                token: true,
+                access_token: true,
               },
             },
           },
@@ -197,8 +197,8 @@ export const currentUserService = async (username) => {
               id: user.hospital.id,
               name: user.hospital.name,
               logo_path: user.hospital.logo_path ?? "",
-              access_token_satusehat:
-                user.hospital.access_token_satusehat ?? "",
+                access_token:
+                user.hospital.satu_sehat_env.access_token ?? "",
             }
           : null,
         gateway: gateway,
@@ -215,7 +215,7 @@ export const currentUserService = async (username) => {
             id: user.hospital.id,
             name: user.hospital.name,
             logo_path: user.hospital.logo_path ?? "",
-            access_token_satusehat: user.hospital.satu_sehat_env.token ?? "",
+            access_token_satusehat: user.hospital.satu_sehat_env.access_token ?? "",
           }
         : null,
       gateway: user.gateway,

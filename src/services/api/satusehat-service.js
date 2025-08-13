@@ -33,14 +33,14 @@ export const updateSatuSehatService = async (hospitalId, data) => {
         organization_id,
         client_id,
         client_secret,
-        token: accessToken,
+        access_token: accessToken,
       },
       create: {
         hospital_id: hospitalId,
         organization_id,
         client_id,
         client_secret,
-        token: accessToken,
+        access_token: accessToken,
       },
     });
 

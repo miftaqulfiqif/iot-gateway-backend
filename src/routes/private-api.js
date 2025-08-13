@@ -14,6 +14,7 @@ import iotGatewayController from "../controllers/iot-gateway-controller.js";
 import pm9000Controller from "../controllers/devices-model/pm-9000-controller.js";
 import ds001Controller from "../controllers/devices-model/ds-001-controller.js";
 import satusehatController from "../controllers/satusehat-controller.js";
+import roomController from "../controllers/patient-room-controller.js";
 
 const privateRouter = new express.Router();
 privateRouter.use(authMiddleware);
@@ -209,5 +210,11 @@ privateRouter.delete(
 
 // SATUSEHAT
 privateRouter.put("/api/satusehat", satusehatController.update);
+
+
+// ROOM
+privateRouter.post("/api/rooms", roomController.createRoom);
+privateRouter.post("/api/beds", roomController.createBed);
+privateRouter.post("/api/add-patient-room", roomController.addPatientRoom);
 
 export { privateRouter };
