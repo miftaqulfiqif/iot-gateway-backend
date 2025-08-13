@@ -42,13 +42,13 @@ const connectTcpIP = async (req, res, next) => {
   }
 };
 const connectUsb = async (req, res, next) => {
-  try{
+  try {
     const result = await connectDeviceUsbService(req.body);
     res.status(200).json({ message: "Device connected", data: result });
   } catch (error) {
     next(error);
   }
-}
+};
 
 const disconnectBluetooth = async (req, res, next) => {
   try {
@@ -62,7 +62,9 @@ const disconnectBluetooth = async (req, res, next) => {
 };
 const disconnectTcpIP = async (req, res, next) => {
   try {
-    const deviceDisconnecting = await disconnectDeviceTcpIP(req.params.ip);
+    const deviceDisconnecting = await disconnectDeviceTcpIP(
+      req.params.ip_address
+    );
     res
       .status(200)
       .json({ message: "Device disconnected", data: deviceDisconnecting });
@@ -80,8 +82,10 @@ const get = async (req, res, next) => {
 };
 
 const getDevicesConnected = async (req, res, next) => {
+  const gatewayId = req.query.gateway_id;
+
   try {
-    const devices = await getDevicesConnectedService();
+    const devices = await getDevicesConnectedService(gatewayId);
     res.status(200).json({ message: "Get device success", data: devices });
   } catch (error) {
     next(error);

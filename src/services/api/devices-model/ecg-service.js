@@ -1,6 +1,6 @@
 import multer from "multer";
 import fs from "fs";
-import {ResponseError} from "../../../errors/response-error.js";
+import { ResponseError } from "../../../errors/response-error.js";
 
 // create ecg directory
 const ecgDir = "./uploads/ecg";
@@ -20,20 +20,20 @@ const storage = multer.diskStorage({
 
 export const uploadEcg = multer({
   storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // Maks 10MB
-    fileFilter: (req, file, cb) => {
-      const allowed = ["application/xml"];
-      if (!allowed.includes(file.mimetype)) {
-        return cb(new ResponseError(402,"File type must be xml"), false);
-      }
-      cb(null, true);
-    },
+  limits: { fileSize: 10 * 1024 * 1024 }, // Maks 10MB
+  fileFilter: (req, file, cb) => {
+    const allowed = ["application/xml", "application/pdf"];
+    if (!allowed.includes(file.mimetype)) {
+      return cb(new ResponseError(402, "File type must be xml"), false);
+    }
+    cb(null, true);
+  },
 });
 
 export const uploadEcgService = async (file) => {
   try {
     if (!file) {
-      throw new ResponseError(401,"No file provided");
+      throw new ResponseError(401, "No file provided");
     }
 
     const fileData = {
@@ -42,14 +42,16 @@ export const uploadEcgService = async (file) => {
       mimetype: file.mimetype,
       size: file.size,
       path: file.path,
-      timestamp: new Date().toLocaleString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      }).replace('.', ':'),
+      timestamp: new Date()
+        .toLocaleString("id-ID", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })
+        .replace(".", ":"),
     };
 
     console.log("Received ECG file:", fileData);

@@ -13,6 +13,7 @@ import measurementActivityController from "../controllers/measurement-activity-c
 import iotGatewayController from "../controllers/iot-gateway-controller.js";
 import pm9000Controller from "../controllers/devices-model/pm-9000-controller.js";
 import ds001Controller from "../controllers/devices-model/ds-001-controller.js";
+import satusehatController from "../controllers/satusehat-controller.js";
 
 const privateRouter = new express.Router();
 privateRouter.use(authMiddleware);
@@ -23,6 +24,7 @@ privateRouter.get("/api/user-current", userController.currentUser); // Get curre
 privateRouter.post("/api/user-logout", userController.logout); // Logout
 privateRouter.get("/api/users", userController.getAllUsers); // Get All Users
 privateRouter.get("/api/user/detail/:user_id", userController.getDetailUser); // Get User By Username
+privateRouter.patch("/api/user/change-gateway", userController.changeGateway); // Change gateway
 
 // Patient
 privateRouter.post("/api/patients", patientController.create); // Create
@@ -197,12 +199,15 @@ privateRouter.delete(
   deviceController.disconnectBluetooth
 ); // Disconnect device
 privateRouter.delete(
-  "/api/devices/disconnect-tcpip/:ip",
+  "/api/devices/disconnect-tcpip/:ip_address",
   deviceController.disconnectTcpIP
 ); // Disconnect device
 privateRouter.delete(
   "/api/device/delete/:device_id",
   deviceController.deleteDevice
 );
+
+// SATUSEHAT
+privateRouter.put("/api/satusehat", satusehatController.update);
 
 export { privateRouter };

@@ -7,12 +7,38 @@ import { validate } from "../../validation/validation.js";
 import { v4 as uuid } from "uuid";
 import bcrypt, { compare } from "bcrypt";
 import { ResponseError } from "../../errors/response-error.js";
-import {idGenerator} from "../../applications/generator/id-generator.js";
+import { idGenerator } from "../../applications/generator/id-generator.js";
 
 export const createUserService = async (hospitalId, request) => {
   try {
-    const { name, gender, address, username, password, email, phone, role_id, nik, ihs_number, last_education, experience, speciality } = request;
-    const {use, line, city, postal_code, country, rt, rw, province_id, regency_id, district_id, village_id} = address
+    const {
+      name,
+      gender,
+      address,
+      username,
+      password,
+      email,
+      phone,
+      role_id,
+      nik,
+      ihs_number,
+      last_education,
+      experience,
+      speciality,
+    } = request;
+    const {
+      use,
+      line,
+      city,
+      postal_code,
+      country,
+      rt,
+      rw,
+      province_id,
+      regency_id,
+      district_id,
+      village_id,
+    } = address;
 
     const findUser = await prismaClient.user.findUnique({
       where: { username: username },
@@ -53,15 +79,15 @@ export const createUserService = async (hospitalId, request) => {
         regency_id: regency_id,
         district_id: district_id,
         village_id: village_id,
-      }
-    })
+      },
+    });
 
     //Create User
     const createUser = await prismaClient.user.create({
       data: {
         name: name,
         gender: gender,
-        address: {connect: {id: userAddress.id}},
+        address: { connect: { id: userAddress.id } },
         username: username,
         password: passwordHashed,
         email: email,
@@ -69,17 +95,17 @@ export const createUserService = async (hospitalId, request) => {
 
         nik: nik,
         ihs_number: ihs_number,
-        last_education:  last_education,
+        last_education: last_education,
         experience: experience,
         speciality: speciality,
 
         hospital: { connect: { id: hospitalId } },
-        role: {connect: {id: role_id}},
+        role: { connect: { id: role_id } },
       },
       include: {
         hospital: true,
         address: true,
-        role: true
+        role: true,
       },
     });
 
@@ -116,8 +142,25 @@ export const currentUserService = async (username) => {
       },
       include: {
         role: true,
-        hospital: true,
+        hospital: {
+          select: {
+            id: true,
+            name: true,
+            logo_path: true,
+            satu_sehat_env: {
+              select: {
+                token: true,
+              },
+            },
+          },
+        },
         profile_picture: true,
+        gateway: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -126,6 +169,41 @@ export const currentUserService = async (username) => {
     }
     // Get role
     const roleName = user.role?.name ?? "";
+
+    // Check Gateway
+    if (user.gateway === null) {
+      const gateway = await prismaClient.iotGateway.findFirst({});
+
+      await prismaClient.user.update({
+        where: {
+          username,
+        },
+        data: {
+          gateway: {
+            connect: {
+              id: gateway.id,
+            },
+          },
+        },
+      });
+
+      return {
+        name: user.name,
+        username: user.username,
+        role: roleName,
+        profile_picture: user.profile_picture?.path ?? "",
+        hospital: user.hospital
+          ? {
+              id: user.hospital.id,
+              name: user.hospital.name,
+              logo_path: user.hospital.logo_path ?? "",
+              access_token_satusehat:
+                user.hospital.access_token_satusehat ?? "",
+            }
+          : null,
+        gateway: gateway,
+      };
+    }
 
     return {
       name: user.name,
@@ -137,8 +215,10 @@ export const currentUserService = async (username) => {
             id: user.hospital.id,
             name: user.hospital.name,
             logo_path: user.hospital.logo_path ?? "",
+            access_token_satusehat: user.hospital.satu_sehat_env.token ?? "",
           }
         : null,
+      gateway: user.gateway,
     };
   } catch (error) {
     throw error;
@@ -239,19 +319,19 @@ export const loginService = async (request) => {
   }
 };
 
-export const getAllUserService = async (
-    page, limit, skip, query
-) => {
+export const getAllUserService = async (page, limit, skip, query) => {
   try {
-    const searchCondition = query ? {
-      OR: [{ name: { contains: query} }]
-    } : {};
+    const searchCondition = query
+      ? {
+          OR: [{ name: { contains: query } }],
+        }
+      : {};
 
     const whereConditions = {
       ...searchCondition,
-    }
+    };
 
-    const total = await prismaClient.user.count({where: whereConditions});
+    const total = await prismaClient.user.count({ where: whereConditions });
     const total_page = limit > 0 ? Math.ceil(total / limit) : 0;
 
     const users = await prismaClient.user.findMany({
@@ -273,17 +353,15 @@ export const getAllUserService = async (
           },
         },
         created_at: true,
-      }
-    })
-
+      },
+    });
 
     return {
       current_page: page,
       total_items: total,
       total_page: total_page,
       data: users,
-    }
-
+    };
   } catch (error) {
     throw error;
   }
@@ -291,7 +369,6 @@ export const getAllUserService = async (
 
 export const getDetailUserService = async (userId) => {
   try {
-
     // Get detail user
     const user = await prismaClient.user.findFirst({
       where: { id: userId },
@@ -328,32 +405,34 @@ export const getDetailUserService = async (userId) => {
     });
 
     // Get Measurement Activity
-    const measurementActivity = await prismaClient.measurementActivity.findMany({
-      where: {
-        patient_handler: {
-          user_id: userId
-        }
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        recorded_at: true,
-        patient_handler: {
-          select: {
-            patient: {
-              select: {
-                name: true,
-              }
-            }
-          }
-        }
-      },
-      orderBy: {
-        recorded_at: "desc"
-      },
-      take: 10
-    })
+    const measurementActivity = await prismaClient.measurementActivity.findMany(
+      {
+        where: {
+          patient_handler: {
+            user_id: userId,
+          },
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          recorded_at: true,
+          patient_handler: {
+            select: {
+              patient: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          recorded_at: "desc",
+        },
+        take: 10,
+      }
+    );
 
     const uniquePatients = new Map();
 
@@ -391,6 +470,37 @@ export const getDetailUserService = async (userId) => {
         recorded_at: item.recorded_at,
       })),
     };
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changeGatewayService = async (userId, gatewayId) => {
+  try {
+    const gateway = await prismaClient.iotGateway.findUnique({
+      where: {
+        id: gatewayId,
+      },
+    });
+
+    if (!gateway) {
+      throw new ResponseError(404, "Gateway not found");
+    }
+
+    const updatedUser = await prismaClient.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        gateway: {
+          connect: {
+            id: gatewayId,
+          },
+        },
+      },
+    });
+
+    return updatedUser;
   } catch (error) {
     throw error;
   }
