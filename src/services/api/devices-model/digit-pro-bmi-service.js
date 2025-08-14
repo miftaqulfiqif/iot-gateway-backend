@@ -1,13 +1,16 @@
 import { prismaClient } from "../../../applications/database.js";
 import { ResponseError } from "../../../errors/response-error.js";
+import axios from "axios";
 
 export const createService = async (user, dataMeasurement) => {
   try {
+    const accessTokenSatuSehat = user.hospital.satu_sehat_env.access_token;
+    const satuSehatEnv = dataMeasurement.satusehat_env;
     let patientHandler = null;
 
     const device = await prismaClient.deviceConnected.findFirst({
       where: {
-        id: dataMeasurement.device_id,
+        mac_address: dataMeasurement.device_mac,
       },
     });
     if (!device) {
@@ -19,7 +22,7 @@ export const createService = async (user, dataMeasurement) => {
       where: {
         user_id: user.id,
         patient_id: dataMeasurement.patient_id,
-        device_id: dataMeasurement.device_id,
+        device_id: device.id,
       },
     });
 
@@ -30,7 +33,7 @@ export const createService = async (user, dataMeasurement) => {
         data: {
           user_id: user.id,
           patient_id: dataMeasurement.patient_id,
-          device_id: dataMeasurement.device_id,
+          device_id: device.id,
         },
       });
     } else {
@@ -51,8 +54,8 @@ export const createService = async (user, dataMeasurement) => {
       data: {
         patient_handler_id: patientHandler.id,
         title: `Pengukuran BMI`,
-        description: dataMeasurement.description
-          ? dataMeasurement.description
+        description: dataMeasurement.note
+          ? dataMeasurement.note
           : `Hasil pengukuran : ${dataMeasurement.bmi} kg`,
       },
       select: {
@@ -62,9 +65,18 @@ export const createService = async (user, dataMeasurement) => {
       },
     });
 
+    // Format FHIR
+    const dataFhir = formatObservation(
+      satuSehatEnv.encounter_id,
+      user.ihs_number,
+      satuSehatEnv.patient_ihs_number,
+      dataMeasurement.weight
+    );
+
     // Create History
-    const result = await prismaClient.$transaction([
-      prismaClient.measurementHistoriesDigitProBMI.create({
+    const result = await prismaClient.$transaction(async (tx) => {
+      // Create measurement history
+      const measurement = await tx.measurementHistoriesDigitProBMI.create({
         data: {
           patient_handler_id: patientHandler.id,
           weight: dataMeasurement.weight,
@@ -81,20 +93,48 @@ export const createService = async (user, dataMeasurement) => {
           body_age: dataMeasurement.body_age,
           lbm: dataMeasurement.lbm,
         },
-      }),
-      prismaClient.deviceConnected.update({
+      });
+
+      // Update device connected
+      await tx.deviceConnected.update({
         where: {
           id: device.id,
         },
         data: {
-          count_used: {
-            increment: 1,
-          },
+          count_used: { increment: 1 },
         },
-      }),
-    ]);
+      });
 
-    const historyMeasurement = result[0];
+      // Send to SATUSEHAT
+      if (satuSehatEnv.encounter_id) {
+        try {
+          await axios.post(
+            `https://api-satusehat-stg.dto.kemkes.go.id/fhir-r4/v1/Observation`,
+            dataFhir,
+            {
+              headers: {
+                "Content-Type": "application/fhir+json",
+                Authorization: `Bearer ${accessTokenSatuSehat}`,
+              },
+            },
+            {
+              timeout: 10000,
+            }
+          );
+        } catch (error) {
+          // Throw supaya transaksi rollback
+          console.error(
+            "Sent to SatuSehat error:",
+            error.response?.data || error.message
+          );
+          throw new Error(
+            `Sent to SatuSehat error: ${error.response?.data.issue[0].code}`
+          );
+        }
+      }
+
+      return measurement;
+    });
 
     const deviceUpdate = await prismaClient.deviceConnected.findUnique({
       where: {
@@ -106,22 +146,23 @@ export const createService = async (user, dataMeasurement) => {
     });
 
     return {
-      id: historyMeasurement.id,
-      weight: historyMeasurement.weight,
-      age: historyMeasurement.age,
-      bmi: historyMeasurement.bmi,
-      body_fat: historyMeasurement.body_fat,
-      muscle_mass: historyMeasurement.muscle_mass,
-      water: historyMeasurement.water,
-      visceral_fat: historyMeasurement.visceral_fat,
-      bone_mass: historyMeasurement.bone_mass,
-      metabolism: historyMeasurement.metabolism,
-      protein: historyMeasurement.protein,
-      obesity: historyMeasurement.obesity,
-      body_age: historyMeasurement.body_age,
-      lbm: historyMeasurement.lbm,
+      weight: result.weight,
+      age: result.age,
+      bmi: result.bmi,
+      body_fat: result.body_fat,
+      muscle_mass: result.muscle_mass,
+      water: result.water,
+      visceral_fat: result.visceral_fat,
+      bone_mass: result.bone_mass,
+      metabolism: result.metabolism,
+      protein: result.protein,
+      obesity: result.obesity,
+      body_age: result.body_age,
+      lbm: result.lbm,
       description: measurementActivity.description,
       count_used: deviceUpdate.count_used,
+      encounter_id: satuSehatEnv.encounter_id ? satuSehatEnv.encounter_id : "",
+      is_satusehat: satuSehatEnv.encounter_id ? true : false,
     };
   } catch (error) {
     throw error;
@@ -540,4 +581,51 @@ export const getByUserIdService = async (query, page, limit, skip, userId) => {
   } catch (error) {
     throw error;
   }
+};
+
+const formatObservation = (encounterId, practitionerId, patientId, weight) => {
+  return {
+    resourceType: "Observation",
+    status: "final",
+    category: [
+      {
+        coding: [
+          {
+            system:
+              "http://terminology.hl7.org/CodeSystem/observation-category",
+            code: "vital-signs",
+            display: "Vital Signs",
+          },
+        ],
+      },
+    ],
+    code: {
+      coding: [
+        {
+          system: "http://loinc.org",
+          code: "29463-7",
+          display: "Body weight",
+        },
+      ],
+    },
+    subject: {
+      reference: `Patient/${patientId}`,
+    },
+    encounter: {
+      reference: `Encounter/${encounterId}`,
+    },
+    effectiveDateTime: "2023-06-04T05:55:00+00:00",
+    issued: "2023-06-04T05:55:00+00:00",
+    performer: [
+      {
+        reference: `Practitioner/${practitionerId}`,
+      },
+    ],
+    valueQuantity: {
+      value: weight,
+      unit: "kg",
+      system: "http://unitsofmeasure.org",
+      code: "kg",
+    },
+  };
 };

@@ -17,9 +17,20 @@ export const authMiddleware = async (req, res, next) => {
       },
       include: {
         role: true,
-        hospital: true,
+        hospital: {
+          select: {
+            id: true,
+            name: true,
+            logo_path: true,
+            satu_sehat_env: {
+              select: {
+                access_token: true,
+              },
+            },
+          },
+        },
         profile_picture: true,
-      }
+      },
     });
 
     // If token is not valid

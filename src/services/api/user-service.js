@@ -197,8 +197,7 @@ export const currentUserService = async (username) => {
               id: user.hospital.id,
               name: user.hospital.name,
               logo_path: user.hospital.logo_path ?? "",
-                access_token:
-                user.hospital.satu_sehat_env.access_token ?? "",
+              access_token: user.hospital.satu_sehat_env.access_token ?? "",
             }
           : null,
         gateway: gateway,
@@ -215,7 +214,7 @@ export const currentUserService = async (username) => {
             id: user.hospital.id,
             name: user.hospital.name,
             logo_path: user.hospital.logo_path ?? "",
-            access_token_satusehat: user.hospital.satu_sehat_env.access_token ?? "",
+            access_token: user.hospital.satu_sehat_env.access_token ?? "",
           }
         : null,
       gateway: user.gateway,
