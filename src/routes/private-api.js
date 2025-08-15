@@ -99,8 +99,8 @@ privateRouter.get(
   measurementHistoriesDigitProBabyController.getByPatientId
 ); // Get by patient id
 privateRouter.get(
-  "/api/measurement-histories-digit-pro-baby/device/:device_id",
-  measurementHistoriesDigitProBabyController.getByDeviceId
+  "/api/measurement-histories-digit-pro-baby/device/:mac_address",
+  measurementHistoriesDigitProBabyController.getByDevice
 ); // Get by device id
 privateRouter.get(
   "/api/measurement-histories-digit-pro-baby/user/:user_id",
@@ -210,7 +210,6 @@ privateRouter.delete(
 
 // SATUSEHAT
 privateRouter.put("/api/satusehat", satusehatController.update);
-
 
 // ROOM
 privateRouter.post("/api/rooms", roomController.createRoom);

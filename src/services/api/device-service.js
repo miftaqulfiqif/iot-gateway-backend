@@ -376,6 +376,7 @@ export const getDetailService = async (deviceId) => {
       const user = userEntry.user;
       if (!uniqueUsers.has(user.id)) {
         uniqueUsers.set(user.id, {
+          id: user.id,
           name: user.name,
           speciality: user.speciality,
           timestamp: userEntry.timestamp,
@@ -389,12 +390,26 @@ export const getDetailService = async (deviceId) => {
       const patient = entry.patient_handler.patient;
       if (!uniquePatients.has(patient.id)) {
         uniquePatients.set(patient.id, {
+          id: patient.id,
           patient_name: patient.name,
           description: entry.description,
           recorded_at: entry.recorded_at,
         });
       }
     }
+
+    // Last Measurement
+    const lastMeasurement = await prismaClient.patientHandler.findFirst({
+      where: {
+        device_id: deviceId,
+      },
+      orderBy: {
+        timestamp: "desc",
+      },
+      select: {
+        timestamp: true,
+      },
+    });
 
     return {
       detail: device,

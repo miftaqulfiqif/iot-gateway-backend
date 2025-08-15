@@ -1,5 +1,4 @@
-import {prismaClient} from "../src/applications/database.js";
-
+import { prismaClient } from "../src/applications/database.js";
 
 async function main() {
   // 1. Create roles
@@ -26,8 +25,24 @@ async function main() {
     },
     select: {
       id: true,
-    }
+    },
   });
+
+  const satuSehat = await prismaClient.satuSehatEnv.findFirst({
+    where: {
+      hospital_id: hospital.id,
+    },
+  });
+  if (!satuSehat) {
+    await prismaClient.satuSehatEnv.create({
+      data: {
+        hospital_id: hospital.id,
+      },
+      select: {
+        id: true,
+      },
+    });
+  }
 
   // 3. Cek apakah user admin sudah ada
   const adminFound = await prismaClient.user.findFirst({
@@ -35,22 +50,23 @@ async function main() {
   });
 
   const address = await prismaClient.address.create({
-   data: {
-     use: "home",
-     line: "Jl Mangkunegara No.39",
-     city: "Jakarta",
-     postal_code: "12345",
-     country: "ID",
-     rt: "2",
-     rw: "3",
-     province_id: "35",
-     regency_id: "3517",
-     district_id: "3517170",
-     village_id: "3517170015",
-   }, select: {
-     id: true,
-    }
-  })
+    data: {
+      use: "home",
+      line: "Jl Mangkunegara No.39",
+      city: "Jakarta",
+      postal_code: "12345",
+      country: "ID",
+      rt: "2",
+      rw: "3",
+      province_id: "35",
+      regency_id: "3517",
+      district_id: "3517170",
+      village_id: "3517170015",
+    },
+    select: {
+      id: true,
+    },
+  });
 
   if (!adminFound) {
     await prismaClient.user.createMany({
@@ -59,7 +75,7 @@ async function main() {
           username: "admin",
           email: "admin@example.com",
           password:
-              "$2b$10$iX3N5ObzDumHSAQuAfxYUOgwuJr8z.F3.H3jxaJmTIw0Z/cVisqBm", // password: admin
+            "$2b$10$iX3N5ObzDumHSAQuAfxYUOgwuJr8z.F3.H3jxaJmTIw0Z/cVisqBm", // password: admin
           phone: "08123456789",
           is_active: true,
           hospital_id: hospital.id,
@@ -72,7 +88,7 @@ async function main() {
           username: "admin1",
           email: "admin1@example.com",
           password:
-              "$2b$10$iX3N5ObzDumHSAQuAfxYUOgwuJr8z.F3.H3jxaJmTIw0Z/cVisqBm", // password: admin
+            "$2b$10$iX3N5ObzDumHSAQuAfxYUOgwuJr8z.F3.H3jxaJmTIw0Z/cVisqBm", // password: admin
           phone: "08123456789",
           is_active: true,
           hospital_id: hospital.id,

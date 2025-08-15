@@ -24,7 +24,7 @@ const getAll = async (req, res, next) => {
     const result = await getAllService(query, page, limit, skip, patient_id);
     res.status(200).json({
       message: "Success getting digit pro babies ",
-      patient_id : patient_id,
+      patient_id: patient_id,
       current_page: page,
       total_items: result.total,
       total_pages: Math.ceil(result.total / limit),
@@ -43,12 +43,17 @@ const getByPatientId = async (req, res, next) => {
   const patientId = req.params.patient_id;
 
   try {
-
     if (!patientId) {
       return res.status(400).json({ message: "Patient id is required" });
     }
 
-    const result = await getByPatientIdService(query, page, limit, skip, patientId);
+    const result = await getByPatientIdService(
+      query,
+      page,
+      limit,
+      skip,
+      patientId
+    );
     res.status(200).json({
       message: "Success getting digit pro babies by patient id",
       patient_id: patientId,
@@ -61,22 +66,28 @@ const getByPatientId = async (req, res, next) => {
     next(error);
   }
 };
-const getByDeviceId = async (req, res, next) => {
+const getByDevice = async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
   const query = req.query.query || "";
-  const deviceId = req.params.device_id || null;
+  const macAddress = req.params.mac_address || null;
 
   try {
-    if (deviceId === null) {
-      return res.status(400).json({ message: "Device id is required" });
+    if (macAddress === null) {
+      return res.status(400).json({ message: "Mac address is required" });
     }
 
-    const result = await getByDeviceIdService(query, page, limit, skip, deviceId);
+    const result = await getByDeviceIdService(
+      query,
+      page,
+      limit,
+      skip,
+      macAddress
+    );
     res.status(200).json({
-      message: "Success getting digit pro babies by device id",
-      device_id: deviceId,
+      message: "Success getting digit pro babies by Device",
+      device_id: macAddress,
       current_page: page,
       total_items: result.total,
       total_pages: Math.ceil(result.total / limit),
@@ -95,7 +106,6 @@ const getByUserId = async (req, res, next) => {
   const userId = req.params.user_id || null;
 
   try {
-
     if (userId === null) {
       return res.status(400).json({ message: "User id is required" });
     }
@@ -113,4 +123,4 @@ const getByUserId = async (req, res, next) => {
   }
 };
 
-export default { create, getAll, getByPatientId, getByDeviceId, getByUserId };
+export default { create, getAll, getByPatientId, getByDevice, getByUserId };
