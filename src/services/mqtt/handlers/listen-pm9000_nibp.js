@@ -1,9 +1,25 @@
 import BaseHandler from "./base-handler.js";
-import userMap from "../../user-map.js";
+import gatewayMap from "../../gateway-map.js";
+import { prismaClient } from "../../../applications/database.js";
 
 export default class ListenPm9000Nibp extends BaseHandler {
-  get topic() {
-    return "iotgateway/{id-unik}/tcpip/patient_monitor_9000_nibp";
+  constructor(io) {
+    super(io);
+    this.gateways = [];
+  }
+
+  async init() {
+    this.gateways = await prismaClient.iotGateway.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+  }
+  get topics() {
+    return this.gateways.map(
+      (gateway) => `iotgateway/${gateway.id}/tcpip/patient_monitor_9000_nibp`
+    );
   }
 
   handle(topic, message) {

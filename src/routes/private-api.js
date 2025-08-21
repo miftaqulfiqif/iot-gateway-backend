@@ -41,7 +41,14 @@ privateRouter.get(
 
 //Baby
 privateRouter.get("/api/babies", babyController.getAll); // Get all
-privateRouter.get("/api/baby/:patient_id", babyController.getByNikParent); // Get by patient id
+privateRouter.get(
+  "/api/baby-by-patient-id/:patient_id",
+  babyController.getByPatientId
+); // Get by patient id
+privateRouter.get(
+  "/api/baby-by-nik-parent/:nik",
+  babyController.getByNikParent
+); // Get by NIK Parent
 privateRouter.post("/api/babies", babyController.create); // Create
 
 // Iot Gatewy

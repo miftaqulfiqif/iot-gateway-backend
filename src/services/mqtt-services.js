@@ -1,5 +1,6 @@
 import { io, mqttClient } from "../applications/app.js";
 import MqttRouter from "./mqtt/mqtt-router.js";
+
 import FoundDevicesHandler from "./mqtt/handlers/found-device-handler.js";
 import ListenDigitProIDAResult from "./mqtt/handlers/listen-digit-pro-ida-result.js";
 import ListenDigitProIDARealtime from "./mqtt/handlers/listen-digit-pro-ida-realtime.js";
@@ -13,16 +14,19 @@ import ListenDs001 from "./mqtt/handlers/listen-ds001.js";
 import ListenDs001Pleth from "./mqtt/handlers/listen-ds001-pleth.js";
 
 const mqttRouter = new MqttRouter(mqttClient, io);
-mqttRouter.registerHandler(FoundDevicesHandler);
-mqttRouter.registerHandler(ListenDigitProIDAResult);
-mqttRouter.registerHandler(ListenDigitProIDARealtime);
-mqttRouter.registerHandler(ListenDigitProBabyRealtime);
-mqttRouter.registerHandler(ListenDigitProBabyResult);
-mqttRouter.registerHandler(ListenBMI);
-mqttRouter.registerHandler(ListenDoppler);
-mqttRouter.registerHandler(ListenPm9000);
-mqttRouter.registerHandler(ListenPm9000Nibp);
-mqttRouter.registerHandler(ListenDs001);
-mqttRouter.registerHandler(ListenDs001Pleth);
+
+await mqttRouter.registerHandlers([
+  FoundDevicesHandler,
+  ListenDigitProIDAResult,
+  ListenDigitProIDARealtime,
+  ListenDigitProBabyRealtime,
+  ListenDigitProBabyResult,
+  ListenBMI,
+  ListenDoppler,
+  ListenPm9000,
+  ListenPm9000Nibp,
+  ListenDs001,
+  ListenDs001Pleth,
+]);
 
 mqttRouter.init();

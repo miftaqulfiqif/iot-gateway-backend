@@ -1,5 +1,5 @@
 import { prismaClient } from "../../applications/database.js";
-import {ResponseError} from "../../errors/response-error.js";
+import { ResponseError } from "../../errors/response-error.js";
 
 // Get all babies
 export const getBabiesService = async () => {
@@ -16,7 +16,7 @@ export const getBabyByNikService = async (nik) => {
     return await prismaClient.baby.findMany({
       where: {
         patient: {
-          nik: nik
+          nik: nik,
         },
       },
     });
@@ -25,7 +25,7 @@ export const getBabyByNikService = async (nik) => {
   }
 };
 
-export const getBabyByPatientId = async (patientId) => {
+export const getBabyByPatientIdService = async (patientId) => {
   try {
     return await prismaClient.baby.findMany({
       where: {
@@ -40,16 +40,24 @@ export const getBabyByPatientId = async (patientId) => {
 // Create baby
 export const createBabyService = async (baby) => {
   try {
-    const {patient_id, ihs_number, multi_birth_integer, name, gender, date_of_birth, place_of_birth} = baby
+    const {
+      patient_id,
+      ihs_number,
+      multi_birth_integer,
+      name,
+      gender,
+      date_of_birth,
+      place_of_birth,
+    } = baby;
 
     // found patient / parrent
     const parent = await prismaClient.patient.findUnique({
       where: {
         id: patient_id,
       },
-    })
+    });
     if (!parent) {
-      throw new ResponseError(401, "Patient not found")
+      throw new ResponseError(401, "Patient not found");
     }
 
     if (ihs_number) {
@@ -57,9 +65,9 @@ export const createBabyService = async (baby) => {
         where: {
           ihs_number: ihs_number,
         },
-      })
+      });
       if (babyIhsNumberFound) {
-        throw new ResponseError(401, "IHS number already exist")
+        throw new ResponseError(401, "IHS number already exist");
       }
     }
 
@@ -72,12 +80,12 @@ export const createBabyService = async (baby) => {
         gender: gender,
         date_of_birth: new Date(date_of_birth),
         place_of_birth: place_of_birth,
-      }
+      },
     });
 
     return {
-      ...newBaby
-    }
+      ...newBaby,
+    };
   } catch (error) {
     throw error;
   }

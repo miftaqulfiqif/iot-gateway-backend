@@ -1,26 +1,54 @@
 import BaseHandler from "./base-handler.js";
-import userMap from "../../user-map.js";
+import gatewayMap from "../../gateway-map.js";
+
+import { prismaClient } from "../../../applications/database.js";
 
 export default class FoundDevicesHandler extends BaseHandler {
-  get topic() {
-    return "iotgateway/{id-unik}/bluetooth/scan_result";
+  constructor(io) {
+    super(io);
+    this.gateways = Array.from(gatewayMap.keys());
+  }
+  async init() {
+    this.gateways = await prismaClient.iotGateway.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+  }
+  get topics() {
+    return this.gateways.map(
+      (gateway) => `iotgateway/${gateway.id}/bluetooth/scan_result`
+    );
   }
 
   handle(topic, message) {
-    const userId = "UserTest";
-
-    const socketId = userMap.get(userId);
-
     const data = JSON.parse(message.toString());
+    const { device, mac, rssi, distance, device_function, connection } =
+      data.data;
+    const gatewaySn = data.gateway_sn;
+    const gateway = gatewayMap.get(gatewaySn);
+    // if (!gateway) {
+    //   console.warn(`⚠️ Gateway ${gatewaySn} tidak ditemukan di gatewayMap`);
+    //   return;
+    // }
+
     const attemptData = {
-      ...data,
+      model: device,
+      mac_address: mac,
+      rssi: rssi,
+      distance: distance,
+      device_function: device_function,
+      connection: connection,
+      gateway_id: gatewaySn,
       type: "measurement",
-      hospital_id: userId,
     };
 
-    // const userId = data.userId;
+    console.log(`✅ LIST OF GATEWAYS:`, this.gateways);
 
-    console.log(`✅ Emitting to user ${userId}:`, { devices: [attemptData] });
-    this.io.to(userId).emit("found_devices", { devices: [attemptData] });
+    console.log(`✅ Emitting to user ${gatewaySn}:`, {
+      devices: [attemptData],
+    });
+    this.io.to(gatewaySn).emit("found_devices", { devices: [attemptData] });
   }
 }

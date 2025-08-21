@@ -1,16 +1,34 @@
 import BaseHandler from "./base-handler.js";
-import userMap from "../../user-map.js";
+import gatewayMap from "../../gateway-map.js";
 
 export default class JoinRoomHandler extends BaseHandler {
-  event = "join";
   get event() {
-    return this.event;
+    return "join";
   }
 
-  handle(socket, userId) {
-    console.log(`✅ User ${userId} joined room, socket: ${socket.id}`);
-    userMap.set(userId, socket.id);
+  handle(socket, gatewaySn) {
+    console.log(`✅ User ${gatewaySn} joined room, socket: ${socket.id}`);
 
-    socket.join(userId);
+    if (gatewayMap.has(gatewaySn)) {
+      console.warn(`⚠️ Gateway ${gatewaySn} sudah terdaftar di gatewayMap`);
+      return;
+    }
+
+    gatewayMap.set(gatewaySn);
+
+    printGateways();
+
+    socket.join(gatewaySn);
   }
+}
+
+export function printGateways() {
+  if (gatewayMap.size === 0) {
+    console.log("⚠️  Tidak ada gateway yang terdaftar.");
+    return;
+  }
+
+  const gateways = Array.from(gatewayMap.keys());
+
+  console.log("✅ LIST OF GATEWAYS : ", gateways);
 }

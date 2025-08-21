@@ -3,8 +3,8 @@ export default class BaseHandler {
     this.io = io;
   }
 
-  get topic() {
-    throw new Error("Handler must define topic getter");
+  get topics() {
+    throw new Error("Handler must define topics getter (array of strings)");
   }
 
   handle(topic, message) {
