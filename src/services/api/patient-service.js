@@ -306,6 +306,8 @@ export const getDetailPatientService = async (patientId) => {
       },
     });
 
+    const age = generateAge(patient.date_of_birth);
+
     // Get Babies
     const babies = await prismaClient.baby.findMany({
       where: {
@@ -328,6 +330,7 @@ export const getDetailPatientService = async (patientId) => {
           select: {
             user: {
               select: {
+                id: true,
                 name: true,
                 speciality: true,
                 profile_picture: true,
@@ -350,6 +353,7 @@ export const getDetailPatientService = async (patientId) => {
         recorded_at: "desc",
       },
       select: {
+        id: true,
         title: true,
         description: true,
         recorded_at: true,
@@ -363,6 +367,7 @@ export const getDetailPatientService = async (patientId) => {
       const user = userEntry.patient_handler.user;
       if (!uniqueUsers.has(user.id)) {
         uniqueUsers.set(user.id, {
+          id: user.id,
           name: user.name,
           speciality: user.speciality,
           profile_picture: user.profile_picture,
@@ -372,7 +377,10 @@ export const getDetailPatientService = async (patientId) => {
     }
 
     return {
-      detail: patient,
+      detail: {
+        ...patient,
+        age,
+      },
       babies: babies,
       recent_doctor: Array.from(uniqueUsers.values()).slice(0, 10),
       medical_activities: medicalActivities,

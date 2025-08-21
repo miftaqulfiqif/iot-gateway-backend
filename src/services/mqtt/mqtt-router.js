@@ -6,22 +6,29 @@ export default class MqttRouter {
   }
 
   // register handler topic mqtt
-  registerHandler(HandlerClass) {
-    const handlerInstance = new HandlerClass(this.io); // create handler instance
-    const topics = handlerInstance.topics || [handlerInstance.topic]; // get topics
+  async registerHandlers(handlerClasses = []) {
+    for (const HandlerClass of handlerClasses) {
+      const handlerInstance = new HandlerClass(this.io);
 
-    // subscribe topics
-    topics.forEach((topic) => {
-      this.handlers.set(topic, handlerInstance); // add handler to map
+      // kalau ada method init(), tunggu dulu
+      if (typeof handlerInstance.init === "function") {
+        await handlerInstance.init();
+      }
 
-      this.mqttClient.subscribe(topic, (err) => {
-        if (err) {
-          console.log(`❌ Error subscribing to ${topic}:`, err);
-        } else {
-          console.log(`✅ Subscribed to topic: ${topic}`);
-        }
+      const topics = handlerInstance.topics;
+
+      topics.forEach((topic) => {
+        this.handlers.set(topic, handlerInstance);
+
+        this.mqttClient.subscribe(topic, (err) => {
+          if (err) {
+            console.log(`❌ Error subscribing to ${topic}:`, err);
+          } else {
+            console.log(`✅ Subscribed to topic: ${topic}`);
+          }
+        });
       });
-    });
+    }
   }
 
   // main function

@@ -1,9 +1,26 @@
 import BaseHandler from "./base-handler.js";
-import userMap from "../../user-map.js";
+import gatewayMap from "../../gateway-map.js";
+import { prismaClient } from "../../../applications/database.js";
 
 export default class ListenDigitProIDARealtime extends BaseHandler {
-  get topic() {
-    return "iotgateway/{id-unik}/bluetooth/digitpro_ida_realtime";
+  constructor(io) {
+    super(io);
+    this.gateways = [];
+  }
+
+  async init() {
+    this.gateways = await prismaClient.iotGateway.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+  }
+
+  get topics() {
+    return this.gateways.map(
+      (gateway) => `iotgateway/${gateway.id}/bluetooth/digitpro_ida_realtime`
+    );
   }
 
   handle(topic, message) {

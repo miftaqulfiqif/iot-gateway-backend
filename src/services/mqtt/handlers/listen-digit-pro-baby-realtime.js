@@ -1,29 +1,50 @@
 import BaseHandler from "./base-handler.js";
-import userMap from "../../user-map.js";
+import gatewayMap from "../../gateway-map.js";
+import { prismaClient } from "../../../applications/database.js";
 
 export default class ListenDigitProIDA extends BaseHandler {
+  constructor(io) {
+    super(io);
+    this.gateways = [];
+  }
+
+  async init() {
+    this.gateways = await prismaClient.iotGateway.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+  }
+
   // get topic
-  get topic() {
-    return "iotgateway/{id-unik}/bluetooth/digitpro_baby_realtime";
+  get topics() {
+    return this.gateways.map(
+      (gateway) => `iotgateway/${gateway.id}/bluetooth/digitpro_baby_realtime`
+    );
   }
 
   // handle function
   handle(topic, message) {
-    const userId = "UserTest";
+    try {
+      const userId = "UserTest";
 
-    // const socketId = userMap.get(userId);
+      // const socketId = userMap.get(userId);
 
-    // parsing data from mqtt
-    const data = JSON.parse(message.toString());
-    // const userId = data.userId;
+      // parsing data from mqtt
+      const data = JSON.parse(message.toString());
+      // const userId = data.userId;
 
-    console.log(data);
+      console.log(data);
 
-    // send data to websocket
-    this.io
-      .to(userId) // socket room
-      .emit("listen_digitprobaby_realtime", {
-        data_digitprobaby_realtime: [data],
-      }); // send data
+      // send data to websocket
+      this.io
+        .to(userId) // socket room
+        .emit("listen_digitprobaby_realtime", {
+          data_digitprobaby_realtime: [data],
+        }); // send data
+    } catch (error) {
+      console.error("❌ Error parsing BMI data:", error.message);
+    }
   }
 }

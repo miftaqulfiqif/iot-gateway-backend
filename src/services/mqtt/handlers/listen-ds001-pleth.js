@@ -1,9 +1,16 @@
 import BaseHandler from "./base-handler.js";
-import userMap from "../../user-map.js";
-
+import gatewayMap from "../../gateway-map.js";
 export default class ListenDs001Pleth extends BaseHandler {
-  get topic() {
-    return "iotgateway/{id-unik}/tcpip/diagnostic_station_001_plethiotgateway/{id-unik}/tcpip/diagnostic_station_001_command";
+  constructor(io) {
+    super(io);
+    this.gateways = [];
+  }
+
+  get topics() {
+    return this.gateways.map(
+      (gateway) =>
+        `iotgateway/${gateway.id}/tcpip/diagnostic_station_001_plethiotgateway/${gateway.id}/tcpip/diagnostic_station_001_command`
+    );
   }
 
   handle(topic, message) {

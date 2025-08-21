@@ -1,6 +1,6 @@
 // /services/socket/handlers/DisconnectHandler.js
 import BaseHandler from "./base-handler.js";
-import userMap from "../../user-map.js";
+import userMap from "../../gateway-map.js";
 
 export default class DisconnectHandler extends BaseHandler {
   event = "disconnect";
