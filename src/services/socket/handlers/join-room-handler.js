@@ -2,8 +2,10 @@ import BaseHandler from "./base-handler.js";
 import gatewayMap from "../../gateway-map.js";
 
 export default class JoinRoomHandler extends BaseHandler {
+  event = "join";
+
   get event() {
-    return "join";
+    return this.event;
   }
 
   handle(socket, gatewaySn) {
@@ -11,12 +13,7 @@ export default class JoinRoomHandler extends BaseHandler {
 
     if (gatewayMap.has(gatewaySn)) {
       console.warn(`⚠️ Gateway ${gatewaySn} sudah terdaftar di gatewayMap`);
-      return;
     }
-
-    gatewayMap.set(gatewaySn);
-
-    printGateways();
 
     socket.join(gatewaySn);
   }

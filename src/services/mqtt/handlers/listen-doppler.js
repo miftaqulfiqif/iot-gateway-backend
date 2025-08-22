@@ -5,36 +5,28 @@ import { prismaClient } from "../../../applications/database.js";
 export default class ListenDoppler extends BaseHandler {
   constructor(io) {
     super(io);
-    this.gateways = [];
   }
 
-  async init() {
-    this.gateways = await prismaClient.iotGateway.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
-    });
-  }
   get topics() {
-    return this.gateways.map(
+    return Array.from(gatewayMap.keys()).map(
       (gateway) =>
-        `iotgateway/${gateway.id}/bluetooth/ultrasonic_pocket_doppler_realtime`
+        `iotgateway/${gateway}/bluetooth/ultrasonic_pocket_doppler_realtime`
     );
   }
 
   handle(topic, message) {
-    const userId = "UserTest";
+    try {
+      const data = JSON.parse(message.toString());
+      const gatewaySn = data.gateway_sn;
+      const dataDoppler = data.data;
 
-    // const socketId = userMap.get(userId);
+      console.log(`✅ Emitting to user ${gatewaySn}:`, {
+        data_doppler: [dataDoppler],
+      });
 
-    const data = JSON.parse(message.toString());
-    // const userId = data.userId;
-
-    console.log(`✅ Emitting to user ${userId}:`, {
-      data_doppler: [data],
-    });
-
-    this.io.to(userId).emit("listen_doppler", { data_doppler: [data] });
+      this.io.to(gatewaySn).emit("listen_doppler", { data_doppler: [dataDoppler] });
+    } catch (error) {
+      console.error("❌ Error parsing Doppler data:", error.message);
+    }
   }
 }
