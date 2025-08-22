@@ -6,19 +6,11 @@ import { prismaClient } from "../../../applications/database.js";
 export default class FoundDevicesHandler extends BaseHandler {
   constructor(io) {
     super(io);
-    this.gateways = Array.from(gatewayMap.keys());
   }
-  async init() {
-    this.gateways = await prismaClient.iotGateway.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
-    });
-  }
+
   get topics() {
-    return this.gateways.map(
-      (gateway) => `iotgateway/${gateway.id}/bluetooth/scan_result`
+    return Array.from(gatewayMap.keys()).map(
+      (gateway) => `iotgateway/${gateway}/bluetooth/scan_result`
     );
   }
 
@@ -27,11 +19,7 @@ export default class FoundDevicesHandler extends BaseHandler {
     const { device, mac, rssi, distance, device_function, connection } =
       data.data;
     const gatewaySn = data.gateway_sn;
-    const gateway = gatewayMap.get(gatewaySn);
-    // if (!gateway) {
-    //   console.warn(`⚠️ Gateway ${gatewaySn} tidak ditemukan di gatewayMap`);
-    //   return;
-    // }
+
 
     const attemptData = {
       model: device,
@@ -44,11 +32,11 @@ export default class FoundDevicesHandler extends BaseHandler {
       type: "measurement",
     };
 
-    console.log(`✅ LIST OF GATEWAYS:`, this.gateways);
 
     console.log(`✅ Emitting to user ${gatewaySn}:`, {
       devices: [attemptData],
     });
+    // this.io.to("gateway1").emit("found_devices", { devices: [attemptData] });
     this.io.to(gatewaySn).emit("found_devices", { devices: [attemptData] });
   }
 }
