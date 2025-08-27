@@ -95,6 +95,7 @@ model User {
 
 model IotGateway {
   id          String   @id @db.VarChar(255)
+  ip_address  String?
   name        String   @db.VarChar(255)
   description String?  @db.VarChar(255)
   created_at  DateTime @default(now())
@@ -379,7 +380,7 @@ model MeasurementHistoriesDigitProBaby {
 model MeasurementHistoriesDigitProIda {
   id            String   @id @default(uuid())
   weight_mother Float    @db.Float
-  weight_child  Float    @db.Float
+  weight_baby   Float?   @db.Float
   recorded_at   DateTime @default(now())
 
   patient_handler_id String

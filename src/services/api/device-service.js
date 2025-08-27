@@ -1,6 +1,7 @@
 import { mqttClient } from "../../applications/app.js";
 import { prismaClient } from "../../applications/database.js";
 import { ResponseError } from "../../errors/response-error.js";
+import deviceController from "../../controllers/device-controller.js";
 
 export const connectDeviceBluetooth = async (device) => {
   try {
@@ -43,11 +44,11 @@ export const connectDeviceBluetooth = async (device) => {
 
     //Emit MQTT
     mqttClient.publish(
-      "iotgateway/{id-unik}/bluetooth/add_device",
-      JSON.stringify({
-        mac: device.id,
-        device_function: device.device_function,
-      }),
+      `iotgateway/${device.gateway_id}/bluetooth/add_device`,
+        JSON.stringify({
+          mac: device.mac_address,
+          device_function: device.device_function,
+        }),
       (err) => {
         if (err) {
           console.log("❌ MQTT publish error:", err);
@@ -95,7 +96,7 @@ export const connectDeviceTcpIP = async (device) => {
 
   //Emit MQTT
   mqttClient.publish(
-    "iotgateway/{id-unik}/tcpip/add_device",
+    `iotgateway/${device.gateway_id}/tcpip/add_device`,
     JSON.stringify({
       ip: device.ip_address,
       device_function: device.device_function,
@@ -105,12 +106,7 @@ export const connectDeviceTcpIP = async (device) => {
         console.log("❌ MQTT publish error:", err);
       } else {
         console.log(
-          `✅ MQTT message published to iotgateway/{id-unik}/tcpip/add_device : ${JSON.stringify(
-            {
-              ip: device.ip_address,
-              device_function: device.device_function,
-            }
-          )}`
+          `✅ MQTT message published to iotgateway/${device.gateway_id}/tcpip/add_device : ${JSON.stringify(payloadSend)}`
         );
       }
     }
@@ -308,6 +304,47 @@ export const getDevicesConnectedService = async (gatewayId) => {
         is_connected: true,
       },
     });
+  }
+};
+
+export const getDevicePatientMonitoringService = async (query, device_function) => {
+  try {
+    const searchCondition = query ? {
+      OR: [
+        {
+          name: {
+            contains: query,
+          },
+        }
+      ]
+    }: {};
+
+    const deviceFunctionCondition = device_function ? {
+      device_function
+    } : {
+      device_function: {
+        in: ["pasien_monitor_9000", "diagnostic_station_001"]
+      }
+    }
+
+    const whereCondition = {
+      ...searchCondition,
+      is_connected: true,
+      ...deviceFunctionCondition
+    }
+
+    const devices = await prismaClient.deviceConnected.findMany({
+      where: whereCondition,
+      select: {
+        id: true,
+        name: true,
+        ip_address: true,
+      }
+    });
+
+    return devices;
+  } catch (error) {
+    throw error;
   }
 };
 

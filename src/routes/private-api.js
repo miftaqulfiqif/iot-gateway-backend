@@ -15,6 +15,7 @@ import pm9000Controller from "../controllers/devices-model/pm-9000-controller.js
 import ds001Controller from "../controllers/devices-model/ds-001-controller.js";
 import satusehatController from "../controllers/satusehat-controller.js";
 import roomController from "../controllers/patient-room-controller.js";
+import centralMonitorController from "../controllers/central-monitor-controller.js";
 
 const privateRouter = new express.Router();
 privateRouter.use(authMiddleware);
@@ -214,13 +215,20 @@ privateRouter.delete(
   "/api/device/delete/:device_id",
   deviceController.deleteDevice
 );
+privateRouter.get("/api/device-connected/monitor", deviceController.getPatientMonitoringDevice) // Get Patient Monitor Device
 
 // SATUSEHAT
 privateRouter.put("/api/satusehat", satusehatController.update);
 
 // ROOM
 privateRouter.post("/api/rooms", roomController.createRoom);
+privateRouter.get("/api/rooms", roomController.getRoom);
 privateRouter.post("/api/beds", roomController.createBed);
+privateRouter.get("/api/beds", roomController.getBed);
 privateRouter.post("/api/add-patient-room", roomController.addPatientRoom);
+privateRouter.get("/api/patient-rooms", roomController.getPatientRoom);
+
+// Central Monitor
+privateRouter.post("/api/central-monitor", centralMonitorController.create);
 
 export { privateRouter };

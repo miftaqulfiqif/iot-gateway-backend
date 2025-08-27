@@ -13,6 +13,7 @@ import StartProIDA from "./socket/handlers/start-digit-pro-ida.js";
 import ScanHandler from "./socket/handlers/scan-handler.js";
 import ConnectDeviceTcpIpHandler from "./socket/handlers/connect-device-tcpip.js";
 import { setSocketIO } from "./socket/socket-instance.js";
+import GetIpAddressIotGatewayHandler from "./socket/handlers/get-ip-address-iot-gateway-handler.js";
 
 export function setupSocket(io) {
   setSocketIO(io);
@@ -24,6 +25,7 @@ export function setupSocket(io) {
   router.registerHandler(ConnectDeviceHandler);
   router.registerHandler(ConnectDeviceTcpIpHandler);
   router.registerHandler(DeleteDeviceHandler);
+  router.registerHandler(GetIpAddressIotGatewayHandler)
 
   //DigitProIda
   router.registerHandler(StartProIDA);
@@ -39,6 +41,7 @@ export function setupSocket(io) {
 
   //BMI
   router.registerHandler(StartBMI);
+
 
   io.on("connection", (socket) => {
     router.handleConnection(socket);

@@ -9,7 +9,7 @@ export const createService = async (user, dataMeasurement) => {
     // Check if device_id not found
     const device = await prismaClient.deviceConnected.findFirst({
       where: {
-        id: dataMeasurement.device_id,
+        mac_address: dataMeasurement.device_mac,
       },
     });
 
@@ -22,7 +22,7 @@ export const createService = async (user, dataMeasurement) => {
       where: {
         user_id: user.id,
         patient_id: dataMeasurement.patient_id,
-        device_id: dataMeasurement.device_id,
+        device_id: device.id,
       },
     });
 
@@ -33,7 +33,7 @@ export const createService = async (user, dataMeasurement) => {
         data: {
           user_id: user.id,
           patient_id: dataMeasurement.patient_id,
-          device_id: dataMeasurement.device_id,
+          device_id: device.id,
         },
       });
     } else {
@@ -66,7 +66,7 @@ export const createService = async (user, dataMeasurement) => {
         title: `Pengukuran Berat Badan Ibu dan Anak. ${baby.name}`,
         description: dataMeasurement.description
           ? dataMeasurement.description
-          : `Hasil pengukuran berat badan Ibu : ${dataMeasurement.weight_mother} kg dan Anak : ${dataMeasurement.weight_child} kg`,
+          : `Hasil pengukuran berat badan Ibu : ${dataMeasurement.weight_mother} kg dan Anak : ${dataMeasurement.weight_baby} kg`,
       },
     });
 
@@ -76,7 +76,7 @@ export const createService = async (user, dataMeasurement) => {
         data: {
           baby_id: dataMeasurement.baby_id,
           weight_mother: dataMeasurement.weight_mother,
-          weight_child: dataMeasurement.weight_child,
+          weight_baby: dataMeasurement.weight_baby,
           patient_handler_id: patientHandler.id,
         },
       }),
@@ -106,7 +106,7 @@ export const createService = async (user, dataMeasurement) => {
     return {
       id: historyMeasurement.id,
       weight_mother: historyMeasurement.weight_mother,
-      weight_child: historyMeasurement.weight_child,
+      weight_baby: historyMeasurement.weight_baby,
       description: measurementActivity.description,
       count_used: deviceUpdate.count_used,
     };
@@ -189,7 +189,7 @@ export const getAllService = async (query, page, limit, skip, patient_id) => {
         select: {
           id: true,
           weight_mother: true,
-          weight_child: true,
+          weight_baby: true,
           recorded_at: true,
           patient_handler: {
             select: {
@@ -323,7 +323,7 @@ export const getByPatientIdService = async (
         select: {
           id: true,
           weight_mother: true,
-          weight_child: true,
+          weight_baby: true,
           recorded_at: true,
           patient_handler: {
             select: {
@@ -454,7 +454,7 @@ export const getByDeviceIdService = async (
         select: {
           id: true,
           weight_mother: true,
-          weight_child: true,
+          weight_baby: true,
           recorded_at: true,
           patient_handler: {
             select: {
@@ -573,7 +573,7 @@ export const getByUserIdService = async (query, page, limit, skip, userId) => {
         select: {
           id: true,
           weight_mother: true,
-          weight_child: true,
+          weight_baby: true,
           recorded_at: true,
           patient_handler: {
             select: {

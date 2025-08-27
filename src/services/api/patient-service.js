@@ -304,6 +304,19 @@ export const getDetailPatientService = async (patientId) => {
       where: {
         id: patientId,
       },
+      include: {
+        patient_room: {
+          select: {
+            room: {
+              select: {
+                name: true,
+                number: true,
+                type: true,
+              },
+            }
+          }
+        }
+      }
     });
 
     const age = generateAge(patient.date_of_birth);
