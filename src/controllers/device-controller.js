@@ -8,7 +8,9 @@ import {
   getDetailService,
   deleteDeviceService,
   connectDeviceUsbService,
+  getDevicePatientMonitoringService,
 } from "../services/api/device-service.js";
+import {prismaClient} from "../applications/database.js";
 
 const connectBluetooth = async (req, res, next) => {
   try {
@@ -102,6 +104,18 @@ const getDetail = async (req, res, next) => {
   }
 };
 
+const getPatientMonitoringDevice = async (req, res, next) => {
+  const query = req.query.query || "";
+  const device_function = req.query.device_function || "";
+
+  try {
+    const result = await getDevicePatientMonitoringService(query, device_function);
+    res.status(200).json({ message: "Get device success", data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export default {
   connectBluetooth,
   connectTcpIP,
@@ -112,4 +126,5 @@ export default {
   getDevicesConnected,
   getDetail,
   deleteDevice,
+  getPatientMonitoringDevice
 };

@@ -9,7 +9,7 @@ export default class ConnectDeviceTcpIpHandler extends BaseHandler {
   }
 
   async handle(socket, data) {
-    const { user_id, hospital_id, display_name, data: payload } = data;
+    const { gateway_sn, hospital_id, display_name, data: payload } = data;
     const { ip, device, device_function, connection, type, topic } =
       payload.payload;
 

@@ -12,6 +12,7 @@ import ListenPm9000 from "./mqtt/handlers/listen-pm9000.js";
 import ListenPm9000Nibp from "./mqtt/handlers/listen-pm9000_nibp.js";
 import ListenDs001 from "./mqtt/handlers/listen-ds001.js";
 import ListenDs001Pleth from "./mqtt/handlers/listen-ds001-pleth.js";
+import ListenGetIpAddressIotGateway from "./mqtt/handlers/listen-get-ip-address-iot-gateway.js";
 
 const mqttRouter = new MqttRouter(mqttClient, io);
 
@@ -27,6 +28,7 @@ await mqttRouter.registerHandlers([
   ListenPm9000Nibp,
   ListenDs001,
   ListenDs001Pleth,
+  ListenGetIpAddressIotGateway
 ]);
 
 mqttRouter.init();

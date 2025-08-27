@@ -20,6 +20,61 @@ export const createRoomService = async (body) => {
     }
 }
 
+export const getRoomsService = async () => {
+    try {
+        const rooms = await prismaClient.room.findMany({
+            orderBy: {
+                created_at: "desc",
+            },
+            select: {
+                id: true,
+                name: true,
+                number: true,
+                type: true,
+                capacity: true,
+                patient_room: {
+                    select: {
+                        patient: {
+                            select: {
+                                name: true,
+                            },
+                        },
+                        assigned_at: true,
+                    },
+                },
+            },
+        });
+
+        // mapping each room
+        const formattedRooms = rooms.map((room) => {
+            const roomStatus = room.patient_room.length === room.capacity ? "full" : "available";
+            const patientCount = room.patient_room.length;
+
+            return {
+                id: room.id,
+                name: room.name,
+                number: room.number,
+                type: room.type,
+                capacity: {
+                    total: room.capacity,
+                    used: patientCount,
+                },
+                status: roomStatus,
+                patients: room.patient_room.map((pr) => ({
+                    name: pr.patient?.name || "",
+                    assigned_at: pr.assigned_at || "",
+                    status: "active"
+                })),
+            };
+        });
+
+        return formattedRooms;
+    } catch (error) {
+        throw error;
+    }
+};
+
+
 export const createBedService = async (body) => {
     try {
         const {room_id, bed_number, type} = body;
@@ -43,6 +98,27 @@ export const createBedService = async (body) => {
         })
 
         return bed
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const getBedsService = async () => {
+    try {
+        const beds = await prismaClient.bed.findMany({
+            orderBy: {
+                created_at: "desc",
+            },
+            select: {
+                id: true,
+                room_id: true,
+                bed_number: true,
+                type: true,
+                status: true,
+            },
+        })
+
+        return beds;
     } catch (error) {
         throw error;
     }
@@ -96,3 +172,12 @@ export const addPatientRoomService = async (body) => {
         throw error;
     }
 };
+
+export const getPatientRoomService = async (patientId) => {
+    try {
+        const rooms = await prismaClient.patientRoom.findMany()
+        return rooms;
+    } catch (error) {
+        throw error;
+    }
+}

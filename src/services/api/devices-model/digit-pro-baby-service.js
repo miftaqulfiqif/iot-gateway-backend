@@ -8,7 +8,7 @@ export const createService = async (user, dataMeasurement) => {
     // Check if device_id not found
     const device = await prismaClient.deviceConnected.findFirst({
       where: {
-        id: dataMeasurement.device_id,
+        mac_address: dataMeasurement.device_mac,
       },
     });
     if (!device) {
@@ -20,7 +20,7 @@ export const createService = async (user, dataMeasurement) => {
       where: {
         user_id: user.id,
         patient_id: dataMeasurement.patient_id,
-        device_id: dataMeasurement.device_id,
+        device_id: device.id,
       },
     });
 
@@ -31,7 +31,7 @@ export const createService = async (user, dataMeasurement) => {
         data: {
           user_id: user.id,
           patient_id: dataMeasurement.patient_id,
-          device_id: dataMeasurement.device_id,
+          device_id: device.id,
         },
       });
     } else {
