@@ -159,6 +159,7 @@ export const currentUserService = async (username) => {
           select: {
             id: true,
             name: true,
+              ip_address: true
           },
         },
       },
@@ -171,38 +172,39 @@ export const currentUserService = async (username) => {
     const roleName = user.role?.name ?? "";
 
     // Check Gateway
-    if (user.gateway === null) {
-      const gateway = await prismaClient.iotGateway.findFirst({});
-
-      await prismaClient.user.update({
-        where: {
-          username,
-        },
-        data: {
-          gateway: {
-            connect: {
-              id: gateway.id,
-            },
-          },
-        },
-      });
-
-      return {
-        name: user.name,
-        username: user.username,
-        role: roleName,
-        profile_picture: user.profile_picture?.path ?? "",
-        hospital: user.hospital
-          ? {
-              id: user.hospital.id,
-              name: user.hospital.name,
-              logo_path: user.hospital.logo_path ?? "",
-              access_token: user.hospital.satu_sehat_env.access_token ?? "",
-            }
-          : null,
-        gateway: gateway,
-      };
-    }
+    //   let gateway = null;
+    // if (user.gateway === null) {
+    //   gateway = await prismaClient.iotGateway.findFirst({});
+    //
+    //   await prismaClient.user.update({
+    //     where: {
+    //       username,
+    //     },
+    //     data: {
+    //       gateway: {
+    //         connect: {
+    //           id: gateway.id,
+    //         },
+    //       },
+    //     },
+    //   });
+    //
+    //   return {
+    //     name: user.name,
+    //     username: user.username,
+    //     role: roleName,
+    //     profile_picture: user.profile_picture?.path ?? "",
+    //     hospital: user.hospital
+    //       ? {
+    //           id: user.hospital.id,
+    //           name: user.hospital.name,
+    //           logo_path: user.hospital.logo_path ?? "",
+    //           access_token: user.hospital.satu_sehat_env.access_token ?? "",
+    //         }
+    //       : null,
+    //     gateway: gateway,
+    //   };
+    // }
 
     return {
       name: user.name,
@@ -217,7 +219,7 @@ export const currentUserService = async (username) => {
             access_token: user.hospital.satu_sehat_env.access_token ?? "",
           }
         : null,
-      gateway: user.gateway,
+      gateway: user.gateway || null,
     };
   } catch (error) {
     throw error;
@@ -359,7 +361,7 @@ export const getAllUserService = async (page, limit, skip, query) => {
       current_page: page,
       total_items: total,
       total_page: total_page,
-      data: users,
+      data: users
     };
   } catch (error) {
     throw error;
@@ -445,16 +447,19 @@ export const getDetailUserService = async (userId) => {
     const recentPatient = Array.from(uniquePatients.values()).slice(0, 10);
 
     return {
-      id: user.id,
-      name: user.name,
-      ihs_number: user.ihs_number ? user.ihs_number : " -- ",
-      username: user.username,
-      email: user.email,
-      phone: user.phone,
-      role: user.role.name,
-      place_of_birth: user.place_of_birth,
-      date_of_birth: user.date_of_birth,
-      address: user.address,
+        is_active: user.is_active,
+      detail: {
+          id: user.id,
+          name: user.name,
+          ihs_number: user.ihs_number ? user.ihs_number : " -- ",
+          username: user.username,
+          email: user.email,
+          phone: user.phone,
+          role: user.role.name,
+          place_of_birth: user.place_of_birth,
+          date_of_birth: user.date_of_birth,
+          address: user.address,
+      },
       profile_picture: user.profile_picture?.path ?? "",
       recent_patients: recentPatient.map((item) => ({
         id: item.id,

@@ -300,7 +300,6 @@ model PatientRoom {
   discharged_at DateTime? @db.DateTime()
 
   patient           Patient           @relation(fields: [patient_id], references: [id])
-  activity_room_log ActivityRoomLog[]
   room              Room              @relation(fields: [room_id], references: [id])
   bed               Bed               @relation(fields: [bed_id], references: [id])
 
@@ -309,11 +308,11 @@ model PatientRoom {
 
 model ActivityRoomLog {
   id              String   @id @default(uuid())
-  patient_room_id String
+  room_id         String
   activity        String   @db.LongText
   timestamp       DateTime @default(now())
 
-  patient_room PatientRoom @relation(fields: [patient_room_id], references: [id])
+  patient_room Room @relation(fields: [room_id], references: [id])
 
   @@map("activity_room_logs")
 }
@@ -331,6 +330,7 @@ model Room {
   doctor_id     String?
 
   patient_room PatientRoom[]
+  activity_room_log ActivityRoomLog[]
   bed          Bed[]
 
   @@map("rooms")

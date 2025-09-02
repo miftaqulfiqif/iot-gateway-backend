@@ -4,9 +4,11 @@ import {
     addPatientRoomService,
     getPatientRoomService,
     getRoomsService,
-    getBedsService
+    getBedsService,
+    getDetailRoomService,
+    getRoomByPatientIdService
 } from "../services/api/patient-room-service.js";
-import * as net from "node:net";
+
 
 const createRoom = async (req, res, next) => {
     try {
@@ -61,4 +63,31 @@ const getPatientRoom = async (req, res, next) => {
         next(error);
     }
 }
-export default {createRoom, getRoom, createBed, getBed, addPatientRoom, getPatientRoom};
+
+const getDetailRoom = async (req, res, next) => {
+    const roomId = req.params.room_id;
+    try {
+        const result = await getDetailRoomService(roomId);
+        res.status(200).json({
+            message: "Detail room",
+            data: result
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+const getRoomByPatientId = async (req, res, next) => {
+    const patientId = req.params.patient_id;
+    try {
+        const result = await getRoomByPatientIdService(patientId);
+        res.status(200).json({
+            message: "Patient room",
+            data: result
+        })
+    } catch (error) {
+        next(error);
+    }
+}
+
+export default {createRoom, getRoom, createBed, getBed, addPatientRoom, getPatientRoom, getDetailRoom, getRoomByPatientId};

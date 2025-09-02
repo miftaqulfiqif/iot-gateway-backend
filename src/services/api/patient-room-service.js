@@ -1,5 +1,7 @@
 import {prismaClient} from "../../applications/database.js";
 import {ResponseError} from "../../errors/response-error.js";
+import * as trace_events from "node:trace_events";
+import {removeUnnecessaryItems} from "@babel/preset-env/lib/filter-items.js";
 
 export const createRoomService = async (body) => {
     try {
@@ -74,7 +76,6 @@ export const getRoomsService = async () => {
     }
 };
 
-
 export const createBedService = async (body) => {
     try {
         const {room_id, bed_number, type} = body;
@@ -128,6 +129,44 @@ export const addPatientRoomService = async (body) => {
     try {
         const { patient_id, room_id, bed_id } = body;
 
+        // Check if patient available
+        const patient = await prismaClient.patient.findUnique({
+            where: {
+                id: patient_id,
+            },
+            select: {
+                name: true
+            }
+        })
+        if (!patient) {
+            throw new ResponseError(401, "No patient found")
+        }
+
+        // Check if room available
+        const room = await prismaClient.room.findUnique({
+            where: {
+                id: room_id,
+            },
+            select: {
+                capacity: true,
+            },
+        });
+        if (!room) {
+            throw new ResponseError(404, "Room not found");
+        }
+
+        // Count patients
+        const patientCount = await prismaClient.patientRoom.count({
+            where: {
+                room_id: room_id,
+            },
+        });
+
+        // Check capacity
+        if (patientCount >= room.capacity) {
+            throw new ResponseError(403, "Room is full");
+        }
+
         // Check if patient is already assigned to a room
         const patientHasRoom = await prismaClient.patientRoom.findUnique({
             where: { patient_id }
@@ -159,8 +198,8 @@ export const addPatientRoomService = async (body) => {
 
             await tx.activityRoomLog.create({
                 data: {
-                    patient_room_id: createdRoom.id,
-                    activity: "check-in",
+                    room_id: room_id,
+                    activity: `Patient ${patient.name} check-in`,
                 },
             });
 
@@ -173,6 +212,85 @@ export const addPatientRoomService = async (body) => {
     }
 };
 
+export const getDetailRoomService = async (roomId) => {
+    try {
+        const room = await prismaClient.room.findUnique({
+            where: {
+                id: roomId,
+            },
+            select: {
+                id: true,
+                name: true,
+                number: true,
+                type: true,
+                capacity: true,
+            }
+        })
+        const patientCount = await prismaClient.patientRoom.count({
+            where: {
+                room_id: roomId,
+            },
+        });
+        const today = new Date();
+        const admissionToday = await prismaClient.patientRoom.count({
+            where: {
+                assigned_at: {
+                    gte: new Date(today.setHours(0, 0, 0, 0)),
+                    lte: new Date(today.setHours(23, 59, 59, 999)),
+                },
+            },
+        });
+
+        const patients = await prismaClient.patientRoom.findMany({
+            where: {
+                room_id: roomId,
+            },
+            select: {
+                id: true,
+                patient: {
+                    select: {
+                        name: true,
+                    }
+                },
+                assigned_at: true
+            }
+        })
+
+        const recentActivities = await prismaClient.activityRoomLog.findMany({
+            where: {
+                room_id: roomId,
+            },
+            select:{
+                id: true,
+                timestamp: true,
+                activity: true,
+            }
+        })
+
+        return {
+            detail: {
+                name: room.name,
+                number: room.number,
+                type: room.type,
+                status: patientCount >= room.capacity ? "full" : "available",
+            },
+            utils: {
+                capacity: {
+                    total_patient: patientCount,
+                    room_capacity: room.capacity,
+                },
+                admissions_today: admissionToday,
+                observations_today: admissionToday,
+            },
+            patients: patients,
+            recent_activities: recentActivities,
+        };
+
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const getPatientRoomService = async (patientId) => {
     try {
         const rooms = await prismaClient.patientRoom.findMany()
@@ -181,3 +299,48 @@ export const getPatientRoomService = async (patientId) => {
         throw error;
     }
 }
+
+export const getRoomByPatientIdService = async (patientId) => {
+    try {
+        const room = await prismaClient.patientRoom.findFirst({
+            where: {
+                patient_id: patientId,
+            },
+            select: {
+                id: true,
+                room: {
+                    select: {
+                        name: true,
+                        number: true,
+                        type: true,
+                    }
+                },
+                bed: {
+                    select: {
+                        bed_number: true,
+                        type: true,
+                    }
+                }
+            }
+        })
+        if (!room) {
+            throw new ResponseError(442, "Room not found");
+        }
+
+        return {
+            id: room.id,
+            room: {
+                name: room.room.name,
+                number: room.room.number,
+                type: room.room.type
+            },
+            bed: {
+                name: room.bed.bed_number,
+                type: room.bed.type
+            }
+        };
+    } catch (error) {
+        throw error;
+    }
+}
+

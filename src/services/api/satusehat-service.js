@@ -1,6 +1,25 @@
 import { prismaClient } from "../../applications/database.js";
 import axios from "axios";
 
+export const getSatuSehatService = async (hospitalId) => {
+    try {
+        const satuSehat = await prismaClient.satuSehatEnv.findFirst({
+            where: {
+                hospital_id: hospitalId
+            },
+            select: {
+                organization_id: true,
+                client_id: true,
+                client_secret: true,
+            }
+        })
+
+        return satuSehat;
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const updateSatuSehatService = async (hospitalId, data) => {
   try {
     const { organization_id, client_id, client_secret } = data;

@@ -14,11 +14,12 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://192.168.1.39:5173",
   "http://192.168.15.234:5173",
-  "http://192.168.13.190:5173",
+  "http://192.168.13.156:5173",
   "http://192.168.13.189:5173",
   "http://192.168.8.180:5173",
 ];
-const mqttClient = mqtt.connect("mqtt://192.168.8.180:1883");
+const mqttClient = mqtt.connect("mqtt://broker.emqx.io:1883");
+
 
 // ==== Inisialisasi ====
 const app = express();
