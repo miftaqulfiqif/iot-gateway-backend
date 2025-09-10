@@ -26,6 +26,13 @@ export default class ListenPm9000 extends BaseHandler {
     const data = JSON.parse(message.toString());
     const gatewaySn = data.gateway_sn;
     const {ip, device_function, ecg_bpm, ecg_bpm_spo2, spo2, resp, temp1, temp2, delta_temp} = data.data;
+    let condition = null;
+
+      if (ecg_bpm > 90 || ecg_bpm_spo2 > 90 || spo2 > 90 || resp > 90 || temp1 > 40 || temp2 > 40 || delta_temp > 40 ) {
+          condition = "critical";
+      } else {
+          condition = "stable";
+      }
 
     const dataPm9000 = {
       ip: ip,
@@ -37,6 +44,7 @@ export default class ListenPm9000 extends BaseHandler {
       temp1: normalizeValue(temp1),
       temp2: normalizeValue(temp2),
       delta_temp: normalizeValue(delta_temp),
+        condition: condition,
     };
 
     console.log(`✅ Emitting to user ${gatewaySn}:`, { data_pm9000: [dataPm9000] });

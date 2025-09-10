@@ -106,7 +106,10 @@ export const connectDeviceTcpIP = async (device) => {
         console.log("❌ MQTT publish error:", err);
       } else {
         console.log(
-          `✅ MQTT message published to iotgateway/${device.gateway_id}/tcpip/add_device : ${JSON.stringify(payloadSend)}`
+          `✅ MQTT message published to iotgateway/${device.gateway_id}/tcpip/add_device : ${JSON.stringify({
+              ip: device.ip_address,
+              device_function: device.device_function,
+          })}`
         );
       }
     }
@@ -144,7 +147,7 @@ export const connectDeviceUsbService = async (device) => {
   }
 };
 
-const disconnectDevice = async (device) => {
+export const disconnectDevice = async (device) => {
   if (device.connection === "bluetooth") {
     await new Promise((resolve, reject) => {
       mqttClient.publish(
@@ -315,7 +318,12 @@ export const getDevicePatientMonitoringService = async (query, device_function) 
           name: {
             contains: query,
           },
-        }
+        },
+          {
+              ip_address: {
+                  contains: query,
+              },
+          }
       ]
     }: {};
 
@@ -338,6 +346,7 @@ export const getDevicePatientMonitoringService = async (query, device_function) 
       select: {
         id: true,
         name: true,
+          gateway_id: true,
         ip_address: true,
       }
     });

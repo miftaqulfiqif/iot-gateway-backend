@@ -171,6 +171,7 @@ model PatientHandler {
   measurement_histories_pm9000         MeasurementHistoriesPM9000[]
   measurement_histories_ds001          MeasurementHistoriesDS001[]
   measurement_activity                 MeasurementActivity[]
+  recent_measurement RecentMeasurement[]
   last_nibp                            LastNibp?
   ecg_1200g                            Ecg1200g?
 
@@ -189,6 +190,7 @@ model Patient {
   place_of_birth String?  @db.VarChar(50)
   date_of_birth  DateTime @db.DateTime()
   height         Int?     @db.Int
+  condition      String?  @db.VarChar(20)
   address_id     String
   created_at     DateTime @default(now())
   updated_at     DateTime @default(now()) @updatedAt
@@ -300,7 +302,6 @@ model PatientRoom {
   discharged_at DateTime? @db.DateTime()
 
   patient           Patient           @relation(fields: [patient_id], references: [id])
-  activity_room_log ActivityRoomLog[]
   room              Room              @relation(fields: [room_id], references: [id])
   bed               Bed               @relation(fields: [bed_id], references: [id])
 
@@ -309,11 +310,11 @@ model PatientRoom {
 
 model ActivityRoomLog {
   id              String   @id @default(uuid())
-  patient_room_id String
+  room_id         String
   activity        String   @db.LongText
   timestamp       DateTime @default(now())
 
-  patient_room PatientRoom @relation(fields: [patient_room_id], references: [id])
+  patient_room Room @relation(fields: [room_id], references: [id])
 
   @@map("activity_room_logs")
 }
@@ -331,6 +332,7 @@ model Room {
   doctor_id     String?
 
   patient_room PatientRoom[]
+  activity_room_log ActivityRoomLog[]
   bed          Bed[]
 
   @@map("rooms")
@@ -501,6 +503,26 @@ model Ecg1200g {
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
 
   @@map("ecg_1200g")
+}
+
+model RecentMeasurement {
+  id String @id @default(uuid())
+  patient_handler_id String @unique
+  parameter Parameter
+  value String @db.VarChar(100)
+  room String? @db.VarChar(255)
+  recorded_at DateTime @default(now())
+
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+
+  @@map("recent_measurements")
+}
+
+enum Parameter {
+  weight
+  blood_pressure
+  temperature
+  sp02
 }
 
 //Activity

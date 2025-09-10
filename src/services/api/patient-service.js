@@ -128,38 +128,116 @@ export const getPatientsService = async (page, limit, skip, query) => {
     };
 
     const total = await prismaClient.patient.count({ where: whereConditions });
+    const countCriticalPatient = await prismaClient.patient.count({ where: {
+        condition: "critical"
+        }});
 
-    const patient = await prismaClient.patient.findMany({
+    const patients = await prismaClient.patient.findMany({
       where: whereConditions,
       skip: skip,
       take: limit,
       orderBy: {
-        id: "desc",
+        created_at: "desc",
       },
-      include: {
-        address: {
-          select: {
-            use: true,
-            line: true,
-            city: true,
-            postal_code: true,
-            country: true,
-            rt: true,
-            rw: true,
-            province: true,
-            regency: true,
-            district: true,
-            village: true,
-          },
+        select: {
+            id: true,
+            nik: true,
+            no_kk: true,
+            ihs_number: true,
+            name: true,
+            gender: true,
+            phone: true,
+            place_of_birth: true,
+            date_of_birth: true,
+            condition: true,
+            created_at: true,
+            address: {
+                select: {
+                    use: true,
+                    line: true,
+                    city: true,
+                    postal_code: true,
+                    country: true,
+                    rt: true,
+                    rw: true,
+                    province: true,
+                    regency: true,
+                    district: true,
+                    village: true,
+                },
+            },
+            patient_room: {
+                select: {
+                    id: true,
+                    bed: {
+                        select: {
+                            id: true,
+                            bed_number: true,
+                            type: true,
+                        },
+                    },
+                    room: {
+                        select: {
+                            name: true,
+                            number: true,
+                            type: true,
+                        },
+                    },
+                },
+            },
+            patient_handler: {
+                select: {
+                    measurement_activity: {
+                        select: {
+                            recorded_at: true
+                        },
+                        orderBy: {
+                            recorded_at: "desc",
+                        },
+                        take: 1
+                    }
+                },
+                take: 1
+            }
         },
-      },
     });
+
+      // Patients data mapping
+      const patientData = patients.map((p) => {
+          // Count age
+          let age = null;
+          if (p.date_of_birth) {
+              const dob = new Date(p.date_of_birth);
+              const today = new Date();
+              age = today.getFullYear() - dob.getFullYear();
+              const m = today.getMonth() - dob.getMonth();
+              if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                  age--;
+              }
+          }
+
+          // Get last measurement
+          let last_measurement = null;
+          if (p.patient_handler.length > 0) {
+              const handler = p.patient_handler[0];
+              if (handler.measurement_activity.length > 0) {
+                  last_measurement = handler.measurement_activity[0].recorded_at;
+              }
+          }
+
+          return {
+              ...p,
+              age,
+              last_measurement,
+          };
+      });
 
     return {
       total,
       page,
       limit,
-      data: patient,
+        critical_patient: countCriticalPatient,
+      data: patientData
     };
   } catch (error) {
     throw error;
@@ -291,6 +369,10 @@ export const getPatient = async (id) => {
       where: {
         id: id,
       },
+        include: {
+          address: true,
+            patient_handler: true,
+        }
     });
   } catch (error) {
     throw error;
@@ -429,30 +511,33 @@ export const showBarcodeTestService = async (id) => {
 //Patent ID Generator
 
 const generatePatientId = async (genderCode, age) => {
-  const count = await prismaClient.patient.count();
-  const numericId = String(count + 1).padStart(13, "0");
+    const count = await prismaClient.patient.count();
 
-  let patientId = `PAT${genderCode}${age}${numericId}`;
+    // Get 2 last digit
+    const nowYear = new Date().getFullYear().toString().slice(-2);
 
-  const existing = await prismaClient.patient.findUnique({
-    where: { id: patientId },
-  });
+    // increment patient id padding 5 digit (jadi max 99999 pasien per tahun)
+    const numericId = String(count + 1).padStart(5, "0");
 
-  // Check if patientId is already exist
-  if (existing) {
-    while (true) {
-      // Generate random number 10 digits
-      const randomNum = Math.floor(1000000000 + Math.random() * 9000000000);
-      patientId = `PAT${genderCode}${age}${randomNum}`;
+    let patientId = `P${nowYear}${numericId}`;
 
-      // Check if patientId is already exist
-      const existingRandom = await prismaClient.patient.findUnique({
+    const existing = await prismaClient.patient.findUnique({
         where: { id: patientId },
-      });
+    });
 
-      if (!existingRandom) break;
+    if (existing) {
+        while (true) {
+            // Generate random 5 digit
+            const randomNum = Math.floor(10000 + Math.random() * 90000);
+            patientId = `P${nowYear}${randomNum}`;
+
+            const existingRandom = await prismaClient.patient.findUnique({
+                where: { id: patientId },
+            });
+
+            if (!existingRandom) break;
+        }
     }
-  }
 
-  return patientId;
+    return patientId;
 };

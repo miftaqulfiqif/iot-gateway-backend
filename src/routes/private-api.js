@@ -208,7 +208,7 @@ privateRouter.delete(
   deviceController.disconnectBluetooth
 ); // Disconnect device
 privateRouter.delete(
-  "/api/devices/disconnect-tcpip/:ip_address",
+"/api/devices/disconnect-tcpip/:ip_address",
   deviceController.disconnectTcpIP
 ); // Disconnect device
 privateRouter.delete(
@@ -218,7 +218,8 @@ privateRouter.delete(
 privateRouter.get("/api/device-connected/monitor", deviceController.getPatientMonitoringDevice) // Get Patient Monitor Device
 
 // SATUSEHAT
-privateRouter.put("/api/satusehat", satusehatController.update);
+privateRouter.get("/api/satusehat", satusehatController.get);
+privateRouter.patch("/api/satusehat", satusehatController.update);
 
 // ROOM
 privateRouter.post("/api/rooms", roomController.createRoom);
@@ -227,8 +228,12 @@ privateRouter.post("/api/beds", roomController.createBed);
 privateRouter.get("/api/beds", roomController.getBed);
 privateRouter.post("/api/add-patient-room", roomController.addPatientRoom);
 privateRouter.get("/api/patient-rooms", roomController.getPatientRoom);
+privateRouter.get("/api/patient-rooms/detail/:room_id", roomController.getDetailRoom);
+privateRouter.get("/api/patient-room/patient/:patient_id", roomController.getRoomByPatientId);
+privateRouter.get("/api/beds-by-room-id/:room_id", roomController.getBedByRoomId);
 
 // Central Monitor
 privateRouter.post("/api/central-monitor", centralMonitorController.create);
+privateRouter.get("/api/central-monitor", centralMonitorController.getCentralMonitors);
 
 export { privateRouter };
