@@ -229,9 +229,11 @@ privateRouter.get("/api/beds", roomController.getBed);
 privateRouter.post("/api/add-patient-room", roomController.addPatientRoom);
 privateRouter.get("/api/patient-rooms", roomController.getPatientRoom);
 privateRouter.get("/api/patient-rooms/detail/:room_id", roomController.getDetailRoom);
-privateRouter.get("/api/patient-room/patient/:patient_id", roomController.getRoomByPatientId)
+privateRouter.get("/api/patient-room/patient/:patient_id", roomController.getRoomByPatientId);
+privateRouter.get("/api/beds-by-room-id/:room_id", roomController.getBedByRoomId);
 
 // Central Monitor
 privateRouter.post("/api/central-monitor", centralMonitorController.create);
+privateRouter.get("/api/central-monitor", centralMonitorController.getCentralMonitors);
 
 export { privateRouter };

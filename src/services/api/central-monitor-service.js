@@ -1,15 +1,20 @@
 import {prismaClient} from "../../applications/database.js";
 import {ResponseError} from "../../errors/response-error.js";
+import {addPatientRoomService} from "./patient-room-service.js";
 
 export const createPatientMonitoring = async (userId, body) => {
     try {
+        const {device_id, patient_id, room_id, bed_id} = body;
+
+        let patientRoom = null;
         let patientHandler = null;
+        const dataPatientRoom = { patient_id, room_id, bed_id };
 
         // Check if patient not found
         const patient = await prismaClient.patient.findUnique({
             where: {
-                id: body.patient_id
-            }
+                id: patient_id
+            },
         })
         if (!patient) {
             throw new ResponseError(401, "Patient not found")
@@ -18,11 +23,25 @@ export const createPatientMonitoring = async (userId, body) => {
         // Check if device not found
         const device = await prismaClient.deviceConnected.findUnique({
             where: {
-                id: body.device_id
+                id: device_id
             }
         })
         if (!device) {
             throw new ResponseError(401, "Device not found")
+        }
+
+        // Check patient room
+        patientRoom = await prismaClient.patientRoom.findFirst({
+            where: {
+                ...dataPatientRoom
+            }
+        })
+        if (!patientRoom) {
+            try {
+                patientRoom = await addPatientRoomService(dataPatientRoom)
+            } catch (error) {
+                throw error;
+            }
         }
 
         // Check patient handler
@@ -102,8 +121,18 @@ export const createPatientMonitoring = async (userId, body) => {
         return {
             id: historyMeasurement.id,
             description: measurementActivity.description,
-            count_used: deviceUpdate.count_used
+            count_used: deviceUpdate.count_used,
+            patient_room : patientRoom,
         };
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const getCentralMonitorService = async () => {
+    try {
+        const centralMonitor = await prismaClient.centralMonitor.findMany()
+        return centralMonitor
     } catch (error) {
         throw error;
     }

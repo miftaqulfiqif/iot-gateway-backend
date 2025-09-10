@@ -318,7 +318,12 @@ export const getDevicePatientMonitoringService = async (query, device_function) 
           name: {
             contains: query,
           },
-        }
+        },
+          {
+              ip_address: {
+                  contains: query,
+              },
+          }
       ]
     }: {};
 
@@ -341,6 +346,7 @@ export const getDevicePatientMonitoringService = async (query, device_function) 
       select: {
         id: true,
         name: true,
+          gateway_id: true,
         ip_address: true,
       }
     });

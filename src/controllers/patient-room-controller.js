@@ -6,8 +6,9 @@ import {
     getRoomsService,
     getBedsService,
     getDetailRoomService,
-    getRoomByPatientIdService
+    getRoomByPatientIdService, getBedByRoomIdService
 } from "../services/api/patient-room-service.js";
+import {prismaClient} from "../applications/database.js";
 
 
 const createRoom = async (req, res, next) => {
@@ -90,4 +91,18 @@ const getRoomByPatientId = async (req, res, next) => {
     }
 }
 
-export default {createRoom, getRoom, createBed, getBed, addPatientRoom, getPatientRoom, getDetailRoom, getRoomByPatientId};
+const getBedByRoomId = async (req, res, next) => {
+    const roomId = req.params.room_id;
+    const isAvailable = req.query.is_available;
+    try {
+        const result = await getBedByRoomIdService(roomId, isAvailable)
+        res.status(200).json({
+            message: "Beds room",
+            data: result
+        })
+    } catch (error) {
+        next(error);
+    }
+}
+
+export default {createRoom, getRoom, createBed, getBed, addPatientRoom, getPatientRoom, getDetailRoom, getRoomByPatientId, getBedByRoomId};

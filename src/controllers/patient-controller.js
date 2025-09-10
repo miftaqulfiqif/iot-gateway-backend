@@ -56,6 +56,7 @@ const getPatientsByHospital = async (req, res, next) => {
       current_page: page,
       total_items: result.total,
       total_pages: Math.ceil(result.total / limit),
+        critical_patient: result.critical_patient,
       data: result.data,
     });
   } catch (error) {
