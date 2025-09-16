@@ -144,11 +144,26 @@ model DeviceConnected {
   @@map("devices_connected")
 }
 
+enum DeviceType {
+  blood_pressure
+  body_weght
+  anthropometry
+  cardiac_and_circulation
+  patient_monitoring
+  multi_parameter_monitoring
+  vital_sign_monitoring
+  vital_sign
+  body_temperature
+}
+
 enum ConnectionType {
   bluetooth
   tcpip
   usb_hid
   usb_vcp
+  flashdisk
+  ftp
+  udpip
   other
 }
 

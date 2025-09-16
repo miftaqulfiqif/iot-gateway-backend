@@ -23,7 +23,13 @@ const createRoom = async (req, res, next) => {
 const getRoom = async (req, res, next) => {
     try {
         const result = await getRoomsService();
-        res.status(200).json({ message: "Getting rooms successfuly", data: result });
+        res.status(200).
+        json({
+            message: "Getting rooms successfuly",
+            total_rooms: result.total_rooms,
+            // available_room_count: result.available_room_count,
+            data: result.rooms
+        });
     } catch (error) {
         next(error);
     }

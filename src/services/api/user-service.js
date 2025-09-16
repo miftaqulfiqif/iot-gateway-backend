@@ -334,6 +334,19 @@ export const getAllUserService = async (page, limit, skip, query) => {
 
     const total = await prismaClient.user.count({ where: whereConditions });
     const total_page = limit > 0 ? Math.ceil(total / limit) : 0;
+    const userAdmin = await prismaClient.user.count({ where: {
+        role_id: "ADM01"
+        } });
+    const userActiveCount = await prismaClient.user.count({
+        where: {
+            is_active: true,
+        }
+    })
+      const userInactiveCount = await prismaClient.user.count({
+          where: {
+              is_active: false,
+          }
+      })
 
     const users = await prismaClient.user.findMany({
       where: whereConditions,
@@ -361,6 +374,9 @@ export const getAllUserService = async (page, limit, skip, query) => {
       current_page: page,
       total_items: total,
       total_page: total_page,
+        users_active: userActiveCount,
+        users_inactive: userInactiveCount,
+        users_admin: userAdmin,
       data: users
     };
   } catch (error) {
