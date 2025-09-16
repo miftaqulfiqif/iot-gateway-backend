@@ -46,6 +46,11 @@ export const getRoomsService = async () => {
                 },
             },
         });
+        // const availableRoomsCount = await prismaClient.room.count({
+        //     where: {
+        //         status: "active",
+        //     }
+        // })
 
         // mapping each room
         const formattedRooms = rooms.map((room) => {
@@ -53,6 +58,7 @@ export const getRoomsService = async () => {
             const patientCount = room.patient_room.length;
 
             return {
+                total_patients: room.patient_room.length,
                 id: room.id,
                 name: room.name,
                 number: room.number,
@@ -70,7 +76,11 @@ export const getRoomsService = async () => {
             };
         });
 
-        return formattedRooms;
+        return {
+            total_rooms: rooms.length,
+            // available_room_count: availableRoomsCount,
+            rooms: formattedRooms,
+        };
     } catch (error) {
         throw error;
     }
