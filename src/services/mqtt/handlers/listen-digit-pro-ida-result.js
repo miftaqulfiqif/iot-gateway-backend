@@ -9,7 +9,7 @@ export default class ListenDigitProIDAResult extends BaseHandler {
 
   get topics() {
     return Array.from(gatewayMap.keys()).map(
-      (gateway) => `iotgateway/${gateway}/bluetooth/digitpro_ida_result`
+      (gateway) => `iotgateway/${gateway}/bluetooth/digitpro_ida/result`,
     );
   }
 
@@ -18,9 +18,13 @@ export default class ListenDigitProIDAResult extends BaseHandler {
     const gatewaySn = data.gateway_sn;
     const dataDigitProIDA = data.data;
 
-    console.log(`✅ Emitting to user ${gatewaySn}:`, { data_digitproida: [dataDigitProIDA] });
+    console.log(`✅ Emitting to user ${gatewaySn}:`, {
+      data_digitproida: [dataDigitProIDA],
+    });
     this.io
       .to(gatewaySn)
-      .emit("listen_digitproida_result", { data_digitproida: [dataDigitProIDA] });
+      .emit("listen_digitproida_result", {
+        data_digitproida: [dataDigitProIDA],
+      });
   }
 }

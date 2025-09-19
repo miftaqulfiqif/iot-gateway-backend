@@ -57,22 +57,6 @@ export const createService = async (user, dataMeasurement) => {
       },
     });
 
-    // Save Measurement Activity
-    const measurementActivity = await prismaClient.measurementActivity.create({
-      data: {
-        patient_handler_id: patientHandler.id,
-        title: `Pengukuran Berat Badan Bayi ${baby.name}`,
-        description: dataMeasurement.description
-          ? dataMeasurement.description
-          : `Hasil pengukuran : ${dataMeasurement.weight} kg`,
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-      },
-    });
-
     // Create history
     const result = await prismaClient.$transaction([
       prismaClient.measurementHistoriesDigitProBaby.create({
@@ -96,6 +80,28 @@ export const createService = async (user, dataMeasurement) => {
           },
         },
       }),
+      prismaClient.historiesMeasurement.create({
+        data: {
+          patient_handler_id: patientHandler.id,
+          parameter: "Weight",
+          value: `${dataMeasurement.weight} kg`,
+          room: dataMeasurement.room ? dataMeasurement.room : "-",
+        },
+      }),
+      prismaClient.measurementActivity.create({
+        data: {
+          patient_handler_id: patientHandler.id,
+          title: `Pengukuran Berat Badan Bayi ${baby.name}`,
+          description: dataMeasurement.description
+            ? dataMeasurement.description
+            : `Hasil pengukuran : ${dataMeasurement.weight} kg`,
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+        },
+      }),
     ]);
 
     const historyMeasurement = result[0];
@@ -112,7 +118,6 @@ export const createService = async (user, dataMeasurement) => {
     return {
       id: historyMeasurement.id,
       weight: historyMeasurement.weight,
-      description: measurementActivity.description,
       count_used: deviceUpdate.count_used,
     };
   } catch (error) {
@@ -242,7 +247,7 @@ export const getAllService = async (query, page, limit, skip, patient_id) => {
       patient_handler: {
         ...h.patient_handler,
         baby: babies.find(
-          (b) => b.patient_id === h.patient_handler?.patient?.id
+          (b) => b.patient_id === h.patient_handler?.patient?.id,
         ),
       },
     }));
@@ -263,7 +268,7 @@ export const getByPatientIdService = async (
   page,
   limit,
   skip,
-  patientId
+  patientId,
 ) => {
   try {
     const whereCondition = {};
@@ -365,7 +370,7 @@ export const getByPatientIdService = async (
       patient_handler: {
         ...h.patient_handler,
         baby: babies.find(
-          (b) => b.patient_id === h.patient_handler?.patient?.id
+          (b) => b.patient_id === h.patient_handler?.patient?.id,
         ),
       },
     }));
@@ -386,7 +391,7 @@ export const getByDeviceIdService = async (
   page,
   limit,
   skip,
-  deviceId
+  deviceId,
 ) => {
   try {
     const whereCondition = {};
@@ -489,7 +494,7 @@ export const getByDeviceIdService = async (
       patient_handler: {
         ...h.patient_handler,
         baby: babies.find(
-          (b) => b.patient_id === h.patient_handler?.patient?.id
+          (b) => b.patient_id === h.patient_handler?.patient?.id,
         ),
       },
     }));
@@ -607,7 +612,7 @@ export const getByUserIdService = async (query, page, limit, skip, userId) => {
       patient_handler: {
         ...h.patient_handler,
         baby: babies.find(
-          (b) => b.patient_id === h.patient_handler?.patient?.id
+          (b) => b.patient_id === h.patient_handler?.patient?.id,
         ),
       },
     }));

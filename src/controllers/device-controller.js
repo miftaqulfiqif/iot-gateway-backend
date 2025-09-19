@@ -10,7 +10,7 @@ import {
   connectDeviceUsbService,
   getDevicePatientMonitoringService,
 } from "../services/api/device-service.js";
-import {prismaClient} from "../applications/database.js";
+import { prismaClient } from "../applications/database.js";
 
 const connectBluetooth = async (req, res, next) => {
   try {
@@ -25,7 +25,10 @@ const connectBluetooth = async (req, res, next) => {
 
 const deleteDevice = async (req, res, next) => {
   try {
-    const deviceDeleting = await deleteDeviceService(req.params.device_id);
+    const deviceDeleting = await deleteDeviceService(
+      req.params.device_id,
+      req.user.gateway_id,
+    );
     res.status(200).json({ message: "Device deleted", data: deviceDeleting });
   } catch (error) {
     next(error);
@@ -65,7 +68,7 @@ const disconnectBluetooth = async (req, res, next) => {
 const disconnectTcpIP = async (req, res, next) => {
   try {
     const deviceDisconnecting = await disconnectDeviceTcpIP(
-      req.params.ip_address
+      req.params.ip_address,
     );
     res
       .status(200)
@@ -109,16 +112,19 @@ const getPatientMonitoringDevice = async (req, res, next) => {
   let device_function = req.query.device_function || "";
 
   try {
-      if (device_function === "all"){
-          device_function = "";
-      }
+    if (device_function === "all") {
+      device_function = "";
+    }
 
-    const result = await getDevicePatientMonitoringService(query, device_function);
+    const result = await getDevicePatientMonitoringService(
+      query,
+      device_function,
+    );
     res.status(200).json({ message: "Get device success", data: result });
   } catch (error) {
     next(error);
   }
-}
+};
 
 export default {
   connectBluetooth,
@@ -130,5 +136,5 @@ export default {
   getDevicesConnected,
   getDetail,
   deleteDevice,
-  getPatientMonitoringDevice
+  getPatientMonitoringDevice,
 };
