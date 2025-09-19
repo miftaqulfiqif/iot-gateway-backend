@@ -129,7 +129,6 @@ model DeviceConnected {
   name            String         @db.VarChar(255)
   model           String         @db.VarChar(100)
   device_function String         @db.VarChar(100)
-  type            String?        @db.VarChar(100)
   connection      ConnectionType
   is_connected    Boolean
   count_used      Int?           @default(0)
@@ -140,20 +139,25 @@ model DeviceConnected {
 
   gateway         IotGateway       @relation(fields: [gateway_id], references: [id])
   patient_handler PatientHandler[]
+  measurement_types DeviceMeasurementType[]
 
   @@map("devices_connected")
 }
 
-enum DeviceType {
-  blood_pressure
-  body_weght
-  anthropometry
-  cardiac_and_circulation
-  patient_monitoring
-  multi_parameter_monitoring
-  vital_sign_monitoring
-  vital_sign
-  body_temperature
+model DeviceType {
+  id    String                 @id @default(uuid())
+  name  String                 @unique
+  devices DeviceMeasurementType[]
+}
+
+model DeviceMeasurementType {
+  device_id        String
+  type_id   String
+
+  device           DeviceConnected @relation(fields: [device_id], references: [id])
+  device_type      DeviceType @relation(fields: [type_id], references: [id])
+
+  @@id([device_id, type_id])
 }
 
 enum ConnectionType {
@@ -186,6 +190,7 @@ model PatientHandler {
   measurement_histories_pm9000         MeasurementHistoriesPM9000[]
   measurement_histories_ds001          MeasurementHistoriesDS001[]
   measurement_activity                 MeasurementActivity[]
+  history_measurement                 HistoriesMeasurement[]
   recent_measurement RecentMeasurement[]
   last_nibp                            LastNibp?
   ecg_1200g                            Ecg1200g?
@@ -496,6 +501,17 @@ model MeasurementActivity {
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
 
   @@map("measurement_activities")
+}
+
+model HistoriesMeasurement {
+  id String @id @default(uuid())
+  patient_handler_id String
+  parameter String
+  value String
+  room String
+  recorded_at DateTime @default(now())
+
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
 }
 
 model LastNibp {

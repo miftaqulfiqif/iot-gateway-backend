@@ -10,7 +10,7 @@ export default class ListenDigitProIDA extends BaseHandler {
   // get topic
   get topics() {
     return Array.from(gatewayMap.keys()).map(
-      (gateway) => `iotgateway/${gateway}/bluetooth/digitpro_baby_result`
+      (gateway) => `iotgateway/${gateway}/bluetooth/digitpro_baby/result`,
     );
   }
 
@@ -27,6 +27,8 @@ export default class ListenDigitProIDA extends BaseHandler {
     // send data to websocket
     this.io
       .to(gatewaySn) // socket room
-      .emit("listen_digitprobaby_result", { data_digitprobaby: [dataDigitProBaby] }); // send data
+      .emit("listen_digitprobaby_result", {
+        data_digitprobaby: [dataDigitProBaby],
+      }); // send data
   }
 }

@@ -45,10 +45,10 @@ export const connectDeviceBluetooth = async (device) => {
     //Emit MQTT
     mqttClient.publish(
       `iotgateway/${device.gateway_id}/bluetooth/add_device`,
-        JSON.stringify({
-          mac: device.mac_address,
-          device_function: device.device_function,
-        }),
+      JSON.stringify({
+        mac: device.mac_address,
+        device_function: device.device_function,
+      }),
       (err) => {
         if (err) {
           console.log("❌ MQTT publish error:", err);
@@ -58,11 +58,11 @@ export const connectDeviceBluetooth = async (device) => {
               {
                 mac: device.mac_address,
                 device_function: device.device_function,
-              }
-            )}`
+              },
+            )}`,
           );
         }
-      }
+      },
     );
 
     return deviceConnecting;
@@ -106,13 +106,15 @@ export const connectDeviceTcpIP = async (device) => {
         console.log("❌ MQTT publish error:", err);
       } else {
         console.log(
-          `✅ MQTT message published to iotgateway/${device.gateway_id}/tcpip/add_device : ${JSON.stringify({
+          `✅ MQTT message published to iotgateway/${device.gateway_id}/tcpip/add_device : ${JSON.stringify(
+            {
               ip: device.ip_address,
               device_function: device.device_function,
-          })}`
+            },
+          )}`,
         );
       }
-    }
+    },
   );
 
   // Check if name is null
@@ -147,11 +149,11 @@ export const connectDeviceUsbService = async (device) => {
   }
 };
 
-export const disconnectDevice = async (device) => {
+export const disconnectDevice = async (device, gatewaySn) => {
   if (device.connection === "bluetooth") {
     await new Promise((resolve, reject) => {
       mqttClient.publish(
-        `iotgateway/{id-unik}/bluetooth/remove_device`,
+        `iotgateway/${gatewaySn}/bluetooth/remove_device`,
         JSON.stringify({
           mac: device.mac_address,
         }),
@@ -159,11 +161,11 @@ export const disconnectDevice = async (device) => {
           if (err) {
             console.error("❌ MQTT publish error:", err);
             return reject(
-              new ResponseError(502, "Failed to send MQTT command")
+              new ResponseError(502, "Failed to send MQTT command"),
             );
           }
           resolve();
-        }
+        },
       );
     });
   } else if (deviceConnection === "tcpip") {
@@ -178,17 +180,17 @@ export const disconnectDevice = async (device) => {
           if (err) {
             console.error("❌ MQTT publish error:", err);
             return reject(
-              new ResponseError(502, "Failed to send MQTT command")
+              new ResponseError(502, "Failed to send MQTT command"),
             );
           }
           resolve();
-        }
+        },
       );
     });
   }
 };
 
-export const deleteDeviceService = async (deviceId) => {
+export const deleteDeviceService = async (deviceId, gatewaySn) => {
   try {
     const deviceFound = await prismaClient.deviceConnected.findUnique({
       where: { id: deviceId },
@@ -197,13 +199,10 @@ export const deleteDeviceService = async (deviceId) => {
       throw new ResponseError(401, "Device not found");
     }
     // Disconnect device
-    disconnectDevice(deviceFound);
+    disconnectDevice(deviceFound, gatewaySn);
 
-    return await prismaClient.deviceConnected.update({
+    return await prismaClient.deviceConnected.delete({
       where: { id: deviceId },
-      data: {
-        is_connected: false,
-      },
     });
   } catch (error) {
     throw error;
@@ -233,7 +232,7 @@ export const disconnectDeviceBluetooth = async (macDevice) => {
           return reject(new ResponseError(500, "Failed to send MQTT command"));
         }
         resolve();
-      }
+      },
     );
   });
 
@@ -269,7 +268,7 @@ export const disconnectDeviceTcpIP = async (ipDevice) => {
           return reject(new ResponseError(500, "Failed to send MQTT command"));
         }
         resolve();
-      }
+      },
     );
   });
 
@@ -310,45 +309,52 @@ export const getDevicesConnectedService = async (gatewayId) => {
   }
 };
 
-export const getDevicePatientMonitoringService = async (query, device_function) => {
+export const getDevicePatientMonitoringService = async (
+  query,
+  device_function,
+) => {
   try {
-    const searchCondition = query ? {
-      OR: [
-        {
-          name: {
-            contains: query,
-          },
-        },
-          {
-              ip_address: {
-                  contains: query,
+    const searchCondition = query
+      ? {
+          OR: [
+            {
+              name: {
+                contains: query,
               },
-          }
-      ]
-    }: {};
+            },
+            {
+              ip_address: {
+                contains: query,
+              },
+            },
+          ],
+        }
+      : {};
 
-    const deviceFunctionCondition = device_function ? {
-      device_function
-    } : {
-      device_function: {
-        in: ["pasien_monitor_9000", "diagnostic_station_001"]
-      }
-    }
+    const deviceFunctionCondition = device_function
+      ? {
+          device_function,
+        }
+      : {
+          device_function: {
+            in: ["pasien_monitor_9000", "diagnostic_station_001"],
+          },
+        };
 
     const whereCondition = {
       ...searchCondition,
       is_connected: true,
-      ...deviceFunctionCondition
-    }
+      ...deviceFunctionCondition,
+    };
 
     const devices = await prismaClient.deviceConnected.findMany({
       where: whereCondition,
       select: {
         id: true,
         name: true,
-          gateway_id: true,
+        gateway_id: true,
         ip_address: true,
-      }
+      },
     });
 
     return devices;
@@ -413,7 +419,7 @@ export const getDetailService = async (deviceId) => {
             },
           },
         },
-      }
+      },
     );
 
     // Filter unique users

@@ -11,7 +11,7 @@ export default class ListenBMI extends BaseHandler {
 
   get topics() {
     return Array.from(gatewayMap.keys()).map(
-      (gateway) => `iotgateway/${gateway}/bluetooth/digitpro_bmi_result`
+      (gateway) => `iotgateway/${gateway}/bluetooth/digitpro_bmi/result`,
     );
   }
 

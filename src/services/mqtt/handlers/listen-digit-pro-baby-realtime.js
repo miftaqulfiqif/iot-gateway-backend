@@ -10,7 +10,7 @@ export default class ListenDigitProIDA extends BaseHandler {
   // get topic
   get topics() {
     return Array.from(gatewayMap.keys()).map(
-      (gateway) => `iotgateway/${gateway}/bluetooth/digitpro_baby_realtime`
+      (gateway) => `iotgateway/${gateway}/bluetooth/digitpro_baby/realtime`,
     );
   }
 

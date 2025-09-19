@@ -8,16 +8,15 @@ const normalizeValue = (value) => {
   }
 
   return value;
-}
+};
 
 const normalizeValueTemp = (value) => {
   if (value === -1000) {
     return null;
   }
-  const newValue = value.toFixed(1)
+  const newValue = value.toFixed(1);
   return parseFloat(newValue);
-}
-
+};
 
 export default class ListenDs001 extends BaseHandler {
   constructor(io) {
@@ -27,7 +26,7 @@ export default class ListenDs001 extends BaseHandler {
   get topics() {
     return Array.from(gatewayMap.keys()).map(
       (gateway) =>
-        `iotgateway/${gateway}/tcpip/diagnostic_station_001_realtime`
+        `iotgateway/${gateway}/tcpip/diagnostic_station_001/realtime`,
     );
   }
 
@@ -36,8 +35,6 @@ export default class ListenDs001 extends BaseHandler {
       const data = JSON.parse(message.toString());
       const gatewaySn = data.gateway_sn;
       const dataDs001 = data.data;
-
-
 
       const payloadSend = {
         ip: dataDs001.ip,
@@ -50,10 +47,12 @@ export default class ListenDs001 extends BaseHandler {
         temp: normalizeValueTemp(dataDs001.temp),
         spo2: normalizeValue(dataDs001.spo2),
         pr_spo2: normalizeValue(dataDs001.pr_spo2),
-        rr: normalizeValue(dataDs001.rr)
-      }
+        rr: normalizeValue(dataDs001.rr),
+      };
 
-      console.log(`✅ Emitting to user ${gatewaySn}:`, { data_ds001: [payloadSend] });
+      console.log(`✅ Emitting to user ${gatewaySn}:`, {
+        data_ds001: [payloadSend],
+      });
       this.io.to(gatewaySn).emit("listen_ds001", { data_ds001: [payloadSend] });
     } catch (error) {
       console.error("❌ Error parsing DS 001 data:", error.message);
