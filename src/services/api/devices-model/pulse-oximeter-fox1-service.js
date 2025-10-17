@@ -11,7 +11,7 @@ export const createService = async (user, dataMeasurement) => {
         mac_address: dataMeasurement.device_mac,
       },
     });
-    if (!device) {
+    if (!device && device.device_function !== "pulse_oximeter") {
       throw new ResponseError(401, "Device not found");
     }
 
@@ -49,37 +49,44 @@ export const createService = async (user, dataMeasurement) => {
 
     // Create history
     const result = await prismaClient.$transaction(async (tx) => {
-      const measurement = await tx.measurementHistoriesMft01.create({
-        data: {
-          temperature: dataMeasurement.temperature,
-          patient_handler: {
-            connect: { id: patientHandler.id },
+      const measurement = await tx.measurementHistoriesPulseOximeterFox1.create(
+        {
+          data: {
+            spo2: dataMeasurement.spo2,
+            pulse_rate: dataMeasurement.pulse_rate,
+            patient_handler: {
+              connect: { id: patientHandler.id },
+            },
           },
         },
-      });
+      );
 
       await tx.lastMeasurementPatient.upsert({
         where: {
           patient_id: patientHandler.patient_id,
         },
         update: {
-          body_temperature: String(dataMeasurement.temperature),
-          timestamp_body_temperature: new Date(),
+          spo2: String(dataMeasurement.spo2),
+          timestamp_spo2: new Date(),
         },
         create: {
-          patient_id: patientHandler.patient_id,
-          body_temperature: String(dataMeasurement.temperature),
-          timestamp_body_temperature: new Date(),
+          spo2: String(dataMeasurement.spo2),
+          timestamp_spo2: new Date(),
+          patient: {
+            connect: {
+              id: patientHandler.patient_id,
+            },
+          },
         },
       });
 
       await tx.measurementActivity.create({
         data: {
           patient_handler_id: patientHandler.id,
-          title: "Pengukuran Body Temperature",
+          title: "Pengukuran Saturasi Oksigen",
           description: dataMeasurement.description
             ? dataMeasurement.description
-            : `Hasil pengukuran : ${dataMeasurement.temperature} °C`,
+            : `Hasil pengukuran : ${dataMeasurement.spo2} %`,
         },
         select: {
           id: true,
@@ -91,8 +98,8 @@ export const createService = async (user, dataMeasurement) => {
       await tx.historiesMeasurement.create({
         data: {
           patient_handler_id: patientHandler.id,
-          parameter: "Body Weight",
-          value: `${dataMeasurement.temperature} °C`,
+          parameter: "Oxigen Saturation",
+          value: `${dataMeasurement.spo2} %`,
           room: dataMeasurement.room ? dataMeasurement.room : "-",
         },
       });
@@ -121,7 +128,7 @@ export const createService = async (user, dataMeasurement) => {
     });
 
     return {
-      temperature: result.temperature,
+      spo2: result.spo2,
       count_used: deviceUpdate.count_used,
     };
   } catch (error) {

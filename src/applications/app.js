@@ -8,7 +8,7 @@ import { privateRouter } from "../routes/private-api.js";
 import { errorMiddleware } from "../middleware/error-middleware.js";
 import cookieParser from "cookie-parser";
 
-// ==== Konfigurasi ====
+// ==== Config ====
 const port = process.env.PORT || 3000;
 const allowedOrigins = [
   "http://localhost:5173",
@@ -20,8 +20,7 @@ const allowedOrigins = [
 ];
 const mqttClient = mqtt.connect("mqtt://192.168.13.156:1883");
 
-
-// ==== Inisialisasi ====
+// ==== Initialization ====
 const app = express();
 const server = http.createServer(app);
 

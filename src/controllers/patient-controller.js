@@ -1,10 +1,9 @@
-import { logger } from "../applications/logging.js";
-import { ResponseError } from "../errors/response-error.js";
 import {
-  createPatient, getDetailPatientService,
+  createPatient,
+  getDetailPatientService,
   getPatient,
   getPatientByUserService,
-  getPatients, getPatientsService,
+  getPatientsService,
   showBarcodeTestService,
   updatePatientService,
 } from "../services/api/patient-service.js";
@@ -28,35 +27,21 @@ const get = async (req, res, next) => {
   }
 };
 
-const getAll = async (req, res, next) => {
-  try {
-    const patients = await getPatients();
-    res.status(200).json({ data: patients });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Get patients by hospital
-const getPatientsByHospital = async (req, res, next) => {
+// Get patients
+const getPatients = async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
   const query = req.query.query || "";
 
   try {
-    const result = await getPatientsService(
-      page,
-      limit,
-      skip,
-      query
-    );
+    const result = await getPatientsService(page, limit, skip, query);
 
     res.status(200).json({
       current_page: page,
       total_items: result.total,
       total_pages: Math.ceil(result.total / limit),
-        critical_patient: result.critical_patient,
+      critical_patient: result.critical_patient,
       data: result.data,
     });
   } catch (error) {
@@ -90,7 +75,7 @@ const getPatientsByUser = async (req, res, next) => {
       page,
       limit,
       skip,
-      query
+      query,
     );
     res.status(200).json({
       current_page: page,
@@ -119,18 +104,19 @@ const getDetailPatient = async (req, res, next) => {
 
   try {
     const result = await getDetailPatientService(patientId);
-    res.status(200).json({ message: "Get detail patient successfully",data: result });
-  }catch (error) {
+    res
+      .status(200)
+      .json({ message: "Get detail patient successfully", data: result });
+  } catch (error) {
     next(error);
   }
-}
+};
 
 export default {
   create,
   update,
   get,
-  getAll,
-  getPatientsByHospital,
+  getPatients,
   getPatientsByUser,
   showBarcodeTest,
   getDetailPatient,

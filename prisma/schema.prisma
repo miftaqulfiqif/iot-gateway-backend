@@ -36,7 +36,6 @@ model Hospital {
   logo_path String?
 
   user           User[]
-  iot_gateway    IotGateway[]
   satu_sehat_env SatuSehatEnv?
 
   @@map("hospitals")
@@ -100,10 +99,13 @@ model IotGateway {
   description String?  @db.VarChar(255)
   created_at  DateTime @default(now())
   updated_at  DateTime @default(now()) @updatedAt()
+  status      Boolean  @default(false)
+  uptime      String?  @db.VarChar(255)
+  firmware    String?  @db.VarChar(50)
 
-  hospital_id String
+  room_id     String?
 
-  hospital         Hospital          @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
+  room             Room?          @relation(fields: [room_id], references: [id], onDelete: Cascade)
   device_connected DeviceConnected[]
   user             User[]
 
@@ -122,42 +124,65 @@ model ProfilePicture {
 }
 
 model DeviceConnected {
-  id              String         @id @default(uuid())
-  mac_address     String?
-  ip_address      String?
-  serial_number   String?
-  name            String         @db.VarChar(255)
-  model           String         @db.VarChar(100)
-  device_function String         @db.VarChar(100)
-  connection      ConnectionType
-  is_connected    Boolean
-  count_used      Int?           @default(0)
-  created_at      DateTime       @default(now())
-  updated_at      DateTime       @default(now()) @updatedAt()
+  id                String         @id @default(uuid())
+  mac_address       String?
+  ip_address        String?
+  type              String?
+  name              String         @db.VarChar(255)
+  model             String         @db.VarChar(100)
+  device_function   String         @db.VarChar(100)
+  connection        ConnectionType
+  is_connected      Boolean
+  count_used        Int?           @default(0)
+  created_at        DateTime       @default(now())
+  updated_at        DateTime       @default(now()) @updatedAt()
 
   gateway_id String
-
   gateway         IotGateway       @relation(fields: [gateway_id], references: [id])
   patient_handler PatientHandler[]
-  measurement_types DeviceMeasurementType[]
+  parameters      DeviceParameter[]
 
   @@map("devices_connected")
 }
 
-model DeviceType {
-  id    String                 @id @default(uuid())
-  name  String                 @unique
-  devices DeviceMeasurementType[]
+model DeviceParameter {
+  id          String               @id @default(uuid())
+  device_id   String
+  parameter   MeasurementParameter
+
+  device      DeviceConnected      @relation(fields: [device_id], references: [id])
+
+  @@unique([device_id, parameter])
+
+  @@map("device_parameters")
 }
 
-model DeviceMeasurementType {
-  device_id        String
-  type_id   String
+enum MeasurementParameter {
+  // Antropometri
+  BODY_WEIGHT
+  BODY_HEIGHT
+  BMI
+  BODY_TEMPERATURE
 
-  device           DeviceConnected @relation(fields: [device_id], references: [id])
-  device_type      DeviceType @relation(fields: [type_id], references: [id])
+  // Tekanan Darah
+  BLOOD_PRESSURE
 
-  @@id([device_id, type_id])
+  // Jantung & Sirkulasi
+  HEART_RATE
+  FETAL_HEART_RATE
+  PULSE_RATE
+
+  // Respirasi & Oksigen
+  RESPIRATORY_RATE
+  SPO2
+
+  // Elektrofisiologi & Monitoring
+  ECG
+  PLETHYSMOGRAM
+
+  // Central Monitoring
+  PATIENT_MONITOR
+  VITAL_SIGN_MONITOR
 }
 
 enum ConnectionType {
@@ -186,12 +211,16 @@ model PatientHandler {
   measurement_histories_digit_pro_ida  MeasurementHistoriesDigitProIda[]
   measurement_histories_digit_pro_bmi  MeasurementHistoriesDigitProBMI[]
   measurement_histories_doppler        MeasurementHistoriesDoppler[]
+  measurement_histories_mft01        MeasurementHistoriesMft01[]
+  measurement_histories_tensione        MeasurementHistoriesTensione[]
+  measurement_histories_pulse_oximeter_fox1        MeasurementHistoriesPulseOximeterFox1[]
+  measurement_histories_ptb_digi        MeasurementHistoriesPTBDigi[]
   central_monitor                      CentralMonitor[]
   measurement_histories_pm9000         MeasurementHistoriesPM9000[]
   measurement_histories_ds001          MeasurementHistoriesDS001[]
   measurement_activity                 MeasurementActivity[]
-  history_measurement                 HistoriesMeasurement[]
-  recent_measurement RecentMeasurement[]
+  history_measurement                  HistoriesMeasurement[]
+  recent_measurement                   RecentMeasurement[]
   last_nibp                            LastNibp?
   ecg_1200g                            Ecg1200g?
 
@@ -200,7 +229,7 @@ model PatientHandler {
 
 model Patient {
   id             String   @id @default(uuid())
-  nik            String   @unique
+  nik            String?   @unique
   no_kk          String?  @db.VarChar(50)
   ihs_number     String?  @db.VarChar(100)
   barcode_img    String   @db.LongText
@@ -209,16 +238,20 @@ model Patient {
   phone          String?  @db.VarChar(16)
   place_of_birth String?  @db.VarChar(50)
   date_of_birth  DateTime @db.DateTime()
-  height         Int?     @db.Int
   condition      String?  @db.VarChar(20)
   address_id     String
+  mother_id      String?
   created_at     DateTime @default(now())
   updated_at     DateTime @default(now()) @updatedAt
 
-  address         Address          @relation(fields: [address_id], references: [id])
-  patient_handler PatientHandler[]
-  babies          Baby[]
-  patient_room    PatientRoom?
+  address           Address           @relation(fields: [address_id], references: [id])
+  patient_handler   PatientHandler[]
+  babies            Patient[]         @relation("mother_to_baby")
+  mother            Patient?          @relation("mother_to_baby", fields: [mother_id], references: [id])
+  patient_room      PatientRoom?
+  last_measurement  LastMeasurementPatient?
+
+  parent_id String?
 
   @@map("patients")
 }
@@ -306,9 +339,6 @@ model Baby {
 
   patient_id String
 
-  patient                              Patient                            @relation(fields: [patient_id], references: [id])
-  measurement_histories_digit_pro_baby MeasurementHistoriesDigitProBaby[]
-  measurement_histories_digit_pro_ida  MeasurementHistoriesDigitProIda[]
 
   @@map("babies")
 }
@@ -354,6 +384,7 @@ model Room {
   patient_room PatientRoom[]
   activity_room_log ActivityRoomLog[]
   bed          Bed[]
+  iot_gateway    IotGateway[]
 
   @@map("rooms")
 }
@@ -383,20 +414,7 @@ model CentralMonitor {
   @@map("central_monitors")
 }
 
-// Digit Pro Baby
-model MeasurementHistoriesDigitProBaby {
-  id          String   @id @default(uuid())
-  weight      Float    @db.Float
-  recorded_at DateTime @default(now())
 
-  patient_handler_id String
-  baby_id            String
-
-  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
-  baby            Baby           @relation(fields: [baby_id], references: [id])
-
-  @@map("measurement_histories_digit_pro_baby")
-}
 
 // Digit Pro Ida
 model MeasurementHistoriesDigitProIda {
@@ -406,10 +424,8 @@ model MeasurementHistoriesDigitProIda {
   recorded_at   DateTime @default(now())
 
   patient_handler_id String
-  baby_id            String
 
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
-  baby            Baby           @relation(fields: [baby_id], references: [id])
 
   @@map("measurement_histories_digit_pro_ida")
 }
@@ -427,22 +443,36 @@ model MeasurementHistoriesDoppler {
   @@map("measurement-histories_doppler")
 }
 
+// Digit Pro Baby
+model MeasurementHistoriesDigitProBaby {
+  id          String   @id @default(uuid())
+  weight      Float    @db.Float
+  recorded_at DateTime @default(now())
+
+  patient_handler_id String
+
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+
+  @@map("measurement_histories_digit_pro_baby")
+}
+
 // Digit Pro BMI
 model MeasurementHistoriesDigitProBMI {
   id           String   @id @default(uuid())
+  height       Float?   @db.Float
   weight       Float    @db.Float
-  age          Float    @db.Float
-  bmi          Float    @db.Float
-  body_fat     Float    @db.Float
-  muscle_mass  Float    @db.Float
-  water        Float    @db.Float
-  visceral_fat Float    @db.Float
-  bone_mass    Float    @db.Float
-  metabolism   Float    @db.Float
-  protein      Float    @db.Float
-  obesity      Float    @db.Float
-  body_age     Float    @db.Float
-  lbm          Float    @db.Float
+  age          Float?   @db.Float
+  bmi          Float?   @db.Float
+  body_fat     Float?   @db.Float
+  muscle_mass  Float?   @db.Float
+  water        Float?   @db.Float
+  visceral_fat Float?   @db.Float
+  bone_mass    Float?   @db.Float
+  metabolism   Float?   @db.Float
+  protein      Float?   @db.Float
+  obesity      Float?   @db.Float
+  body_age     Float?   @db.Float
+  lbm          Float?   @db.Float
   recorded_at  DateTime @default(now())
 
   patient_handler_id String
@@ -450,6 +480,61 @@ model MeasurementHistoriesDigitProBMI {
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
 
   @@map("measurement_histories_digit_pro_bmi")
+}
+
+// Thermo gun MFT 01
+model MeasurementHistoriesMft01 {
+  id String @id @default(uuid())
+  temperature Float @db.Float
+  recorded_at DateTime @default(now())
+
+  patient_handler_id String
+
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+
+  @@map("measurement_histories_mft01")
+}
+
+// Tensi One
+model MeasurementHistoriesTensione {
+  id String @id @default(uuid())
+  systolic Float @db.Float
+  diastolic Float @db.Float
+  map Float @db.Float
+  pulse_rate Float @db.Float
+  spo2 Float @db.Float
+
+  patient_handler_id String
+
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+
+  @@map("measurement_histories_tensione")
+
+}
+
+// Pulse Oximeter FOX 1
+model MeasurementHistoriesPulseOximeterFox1 {
+  id String @id @default(uuid())
+  spo2 Float @db.Float
+  pulse_rate Float @db.Float
+  recorded_at DateTime @default(now())
+
+  patient_handler_id String
+
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+
+  @@map("measurement_histories_pulse_oximeter_fox_1")
+}
+
+model MeasurementHistoriesPTBDigi {
+  id String @id @default(uuid())
+  distance Float @db.Float
+  recorded_at DateTime @default(now())
+
+  patient_handler_id String
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+
+  @@map("measurement_histories_ptb_digi")
 }
 
 model MeasurementHistoriesPM9000 {
@@ -512,7 +597,30 @@ model HistoriesMeasurement {
   recorded_at DateTime @default(now())
 
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
+
+  @@map("histories_measurement")
 }
+
+model LastMeasurementPatient {
+  id String @id @default(uuid())
+  patient_id String @unique
+  blood_pressure String?
+  spo2 String?
+  body_temperature String?
+  body_weight String?
+  body_height String?
+
+  timestamp_blood_pressure DateTime?
+  timestamp_spo2 DateTime?
+  timestamp_body_temperature DateTime?
+  timestamp_body_weight DateTime?
+  timestamp_body_height DateTime?
+
+  patient Patient @relation(fields: [patient_id], references: [id])
+
+  @@map("last_measurement_patients")
+}
+
 
 model LastNibp {
   id                 String @id @default(uuid())

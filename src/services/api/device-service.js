@@ -3,11 +3,15 @@ import { prismaClient } from "../../applications/database.js";
 import { ResponseError } from "../../errors/response-error.js";
 import deviceController from "../../controllers/device-controller.js";
 
-export const connectDeviceBluetooth = async (device) => {
+export const connectDeviceBluetooth = async (data) => {
+  const { gateway_id, mac_address, model, device_function } = data;
+
   try {
+    // return getParameters(device.device_function).map((p) => ({ parameter: p }));
+
     const gatewayDevice = await prismaClient.iotGateway.findUnique({
       where: {
-        id: device.gateway_id,
+        id: gateway_id,
       },
     });
 
@@ -18,8 +22,8 @@ export const connectDeviceBluetooth = async (device) => {
     // Check if mac address device exist
     const macAddressDeviceFound = await prismaClient.deviceConnected.findFirst({
       where: {
-        mac_address: device.mac_address,
-        gateway_id: device.gateway_id,
+        mac_address: mac_address,
+        gateway_id: gateway_id,
       },
     });
     if (macAddressDeviceFound) {
@@ -27,27 +31,28 @@ export const connectDeviceBluetooth = async (device) => {
     }
 
     // Check if name is null
-    if (
-      device.name === null ||
-      device.name === undefined ||
-      device.name === ""
-    ) {
-      device.name = device.model;
+    if (data.name === null || data.name === undefined || data.name === "") {
+      data.name = model;
     }
 
     const deviceConnecting = await prismaClient.deviceConnected.create({
       data: {
-        ...device,
+        ...data,
         is_connected: true,
+        parameters: {
+          create: getParameters(device_function).map((p) => ({
+            parameter: p,
+          })),
+        },
       },
     });
 
     //Emit MQTT
     mqttClient.publish(
-      `iotgateway/${device.gateway_id}/bluetooth/add_device`,
+      `iotgateway/${gateway_id}/bluetooth/add_device`,
       JSON.stringify({
-        mac: device.mac_address,
-        device_function: device.device_function,
+        mac: mac_address,
+        device_function: device_function,
       }),
       (err) => {
         if (err) {
@@ -56,8 +61,8 @@ export const connectDeviceBluetooth = async (device) => {
           console.log(
             `✅ MQTT message published to iotgateway/{id-unik}/tcpip/add_device : ${JSON.stringify(
               {
-                mac: device.mac_address,
-                device_function: device.device_function,
+                mac: mac_address,
+                device_function: device_function,
               },
             )}`,
           );
@@ -280,15 +285,61 @@ export const disconnectDeviceTcpIP = async (ipDevice) => {
   return removedDevice;
 };
 
-export const getDevices = async (gatewayId) => {
-  if (gatewayId) {
-    return await prismaClient.deviceConnected.findMany({
-      where: {
-        gateway_id: gatewayId,
-      },
-    });
+export const getDevices = async (gatewayId, params, isBaby, query) => {
+  let paramsList = [];
+  let gatewayList = [];
+
+  // parsing & params validation
+  if (params) {
+    paramsList = params.split(",").map((p) => p.trim());
+
+    const invalidParams = paramsList.filter(
+      (p) => !Object.values(MeasurementParameter).includes(p),
+    );
+
+    if (invalidParams.length > 0) {
+      return [];
+    }
   }
-  return await prismaClient.deviceConnected.findMany();
+
+  // parsing gateway
+  if (gatewayId) {
+    gatewayList = gatewayId.split(",").map((g) => g.trim());
+  }
+
+  // Query condition
+  const whereClause = {};
+
+  if (paramsList.length > 0) {
+    whereClause.parameters = {
+      some: { parameter: { in: paramsList } },
+    };
+  }
+
+  if (gatewayList.length > 0) {
+    whereClause.gateway_id = { in: gatewayList };
+  }
+
+  if (!isBaby) {
+    whereClause.device_function = {
+      notIn: ["digitpro_baby", "digitpro_ida"],
+    };
+  }
+
+  const devices = await prismaClient.deviceConnected.findMany({
+    where: whereClause,
+    include: {
+      parameters: {
+        select: { parameter: true },
+      },
+      gateway: {
+        select: { id: true, name: true },
+      },
+    },
+    orderBy: { created_at: "desc" },
+  });
+
+  return devices;
 };
 
 export const getDevicesConnectedService = async (gatewayId) => {
@@ -472,3 +523,63 @@ export const getDetailService = async (deviceId) => {
     throw error;
   }
 };
+
+export const getMeasurementParameterService = async () => {
+  try {
+    return MeasurementParameter;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// definisi parameter medis (mirip enum)
+const MeasurementParameter = {
+  BODY_WEIGHT: "BODY_WEIGHT",
+  BODY_HEIGHT: "BODY_HEIGHT",
+  BODY_TEMPERATURE: "BODY_TEMPERATURE",
+  BLOOD_PRESSURE: "BLOOD_PRESSURE",
+  HEART_RATE: "HEART_RATE",
+  FETAL_HEART_RATE: "FETAL_HEART_RATE",
+  BMI: "BMI",
+  ECG: "ECG",
+  PLETHYSMOGRAM: "PLETHYSMOGRAM",
+  SPO2: "SPO2",
+  RESPIRATORY_RATE: "RESPIRATORY_RATE",
+  PULSE_RATE: "PULSE_RATE",
+  PATIENT_RATE: "PATIENT_RATE",
+  VITAL_SIGN_MONITOR: "VITAL_SIGN_MONITOR",
+};
+
+// mapping deviceFunction -> parameter
+const DEVICE_PARAMETER_MAP = {
+  digitpro_baby: [MeasurementParameter.BODY_WEIGHT],
+  digitpro_ida: [MeasurementParameter.BODY_WEIGHT],
+  ultrasonic_pocket_doppler: [MeasurementParameter.FETAL_HEART_RATE],
+  digitpro_bmi: [MeasurementParameter.BMI, MeasurementParameter.BODY_WEIGHT],
+  diagnostic_station_001: [
+    MeasurementParameter.ECG,
+    MeasurementParameter.PLETHYSMOGRAM,
+    MeasurementParameter.VITAL_SIGN_MONITOR,
+  ],
+  mft01: [MeasurementParameter.BODY_TEMPERATURE],
+  tensione: [MeasurementParameter.BLOOD_PRESSURE],
+  pulse_oximeter: [
+    MeasurementParameter.SPO2,
+    MeasurementParameter.RESPIRATORY_RATE,
+    MeasurementParameter.PULSE_RATE,
+  ],
+  height_gauge: [MeasurementParameter.BODY_HEIGHT],
+};
+
+// Konfersi string ke enum prism
+function toPrismaParameter(params) {
+  if (!MeasurementParameter[params]) {
+    throw new Error(`Invalid parameter ${params}`);
+  }
+  return MeasurementParameter[params];
+}
+
+// helper function
+function getParameters(deviceFunction) {
+  return DEVICE_PARAMETER_MAP[deviceFunction] || [MeasurementParameter.OTHER];
+}

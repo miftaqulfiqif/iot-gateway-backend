@@ -26,6 +26,3 @@ ALTER TABLE `patients` MODIFY `date_of_birth` DATETIME NOT NULL;
 
 -- AlterTable
 ALTER TABLE `users` MODIFY `date_of_birth` DATETIME NULL;
-
--- AddForeignKey
-ALTER TABLE `patient_handlers` ADD CONSTRAINT `patient_handlers_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -1,6 +1,5 @@
 import BaseHandler from "./base-handler.js";
 import gatewayMap from "../../gateway-map.js";
-import { prismaClient } from "../../../applications/database.js";
 
 export default class ListenDigitProIDA extends BaseHandler {
   constructor(io) {

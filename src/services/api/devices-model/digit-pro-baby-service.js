@@ -47,30 +47,57 @@ export const createService = async (user, dataMeasurement) => {
       });
     }
 
-    // Get baby
-    const baby = await prismaClient.baby.findUnique({
-      where: {
-        id: dataMeasurement.baby_id,
-      },
-      select: {
-        name: true,
-      },
-    });
-
     // Create history
-    const result = await prismaClient.$transaction([
-      prismaClient.measurementHistoriesDigitProBaby.create({
+    const result = await prismaClient.$transaction(async (tx) => {
+      const measurement = await tx.measurementHistoriesDigitProBaby.create({
         data: {
-          baby_id: dataMeasurement.baby_id,
           weight: dataMeasurement.weight,
+          patient_handler: {
+            connect: { id: patientHandler.id },
+          },
+        },
+      });
+
+      await tx.lastMeasurementPatient.upsert({
+        where: {
+          patient_id: patientHandler.patient_id,
+        },
+        update: {
+          body_weight: String(dataMeasurement.weight),
+          timestamp_body_weight: new Date(),
+        },
+        create: {
+          patient_id: patientHandler.patient_id,
+          body_weight: String(dataMeasurement.weight),
+          timestamp_body_weight: new Date(),
+        },
+      });
+
+      await tx.measurementActivity.create({
+        data: {
           patient_handler_id: patientHandler.id,
+          title: "Pengukuran berat badan bayi",
+          description: dataMeasurement.description
+            ? dataMeasurement.description
+            : `Hasil pengukuran : ${dataMeasurement.weight}`,
         },
         select: {
           id: true,
-          weight: true,
+          title: true,
+          description: true,
         },
-      }),
-      prismaClient.deviceConnected.update({
+      });
+
+      await tx.historiesMeasurement.create({
+        data: {
+          patient_handler_id: patientHandler.id,
+          parameter: "Body Weight",
+          value: `${dataMeasurement.weight} kg`,
+          room: dataMeasurement.room ? dataMeasurement.room : "-",
+        },
+      });
+
+      await tx.deviceConnected.update({
         where: {
           id: device.id,
         },
@@ -79,32 +106,10 @@ export const createService = async (user, dataMeasurement) => {
             increment: 1,
           },
         },
-      }),
-      prismaClient.historiesMeasurement.create({
-        data: {
-          patient_handler_id: patientHandler.id,
-          parameter: "Weight",
-          value: `${dataMeasurement.weight} kg`,
-          room: dataMeasurement.room ? dataMeasurement.room : "-",
-        },
-      }),
-      prismaClient.measurementActivity.create({
-        data: {
-          patient_handler_id: patientHandler.id,
-          title: `Pengukuran Berat Badan Bayi ${baby.name}`,
-          description: dataMeasurement.description
-            ? dataMeasurement.description
-            : `Hasil pengukuran : ${dataMeasurement.weight} kg`,
-        },
-        select: {
-          id: true,
-          title: true,
-          description: true,
-        },
-      }),
-    ]);
+      });
 
-    const historyMeasurement = result[0];
+      return measurement;
+    });
 
     const deviceUpdate = await prismaClient.deviceConnected.findUnique({
       where: {
@@ -116,8 +121,7 @@ export const createService = async (user, dataMeasurement) => {
     });
 
     return {
-      id: historyMeasurement.id,
-      weight: historyMeasurement.weight,
+      weight: result.weight,
       count_used: deviceUpdate.count_used,
     };
   } catch (error) {

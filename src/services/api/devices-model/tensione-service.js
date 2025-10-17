@@ -11,7 +11,7 @@ export const createService = async (user, dataMeasurement) => {
         mac_address: dataMeasurement.device_mac,
       },
     });
-    if (!device && device.device_function !== "pulse_oximeter") {
+    if (!device && device.device_function !== "tensione") {
       throw new ResponseError(401, "Device not found");
     }
 
@@ -49,29 +49,36 @@ export const createService = async (user, dataMeasurement) => {
 
     // Create history
     const result = await prismaClient.$transaction(async (tx) => {
-      const measurement = await tx.measurementHistoriesPulseOximeterFox1.create(
-        {
-          data: {
-            spo2: dataMeasurement.spo2,
-            pulse_rate: dataMeasurement.pulse_rate,
-            patient_handler: {
-              connect: { id: patientHandler.id },
-            },
+      const measurement = await tx.measurementHistoriesTensione.create({
+        data: {
+          systolic: dataMeasurement.systolic,
+          diastolic: dataMeasurement.diastolic,
+          map: dataMeasurement.map,
+          pulse_rate: dataMeasurement.pulse_rate,
+          spo2: dataMeasurement.spo2,
+          patient_handler: {
+            connect: { id: patientHandler.id },
           },
         },
-      );
+      });
 
       await tx.lastMeasurementPatient.upsert({
         where: {
           patient_id: patientHandler.patient_id,
         },
         update: {
-          spo2: String(dataMeasurement.spo2),
-          timestamp_spo2: new Date(),
+          blood_pressure: String(
+            `${dataMeasurement.systolic}/${dataMeasurement.diastolic}`,
+          ),
+
+          timestamp_blood_pressure: new Date(),
         },
         create: {
-          spo2: String(dataMeasurement.spo2),
-          timestamp_spo2: new Date(),
+          blood_pressure: String(
+            `${dataMeasurement.systolic}/${dataMeasurement.diastolic}`,
+          ),
+
+          timestamp_blood_pressure: new Date(),
           patient: {
             connect: {
               id: patientHandler.patient_id,
@@ -83,10 +90,10 @@ export const createService = async (user, dataMeasurement) => {
       await tx.measurementActivity.create({
         data: {
           patient_handler_id: patientHandler.id,
-          title: "Pengukuran Saturasi Oksigen",
+          title: "Pengukuran Tekanan Darah",
           description: dataMeasurement.description
             ? dataMeasurement.description
-            : `Hasil pengukuran : ${dataMeasurement.spo2} %`,
+            : `${dataMeasurement.systolic}/${dataMeasurement.diastolic} mmHg`,
         },
         select: {
           id: true,
@@ -98,8 +105,8 @@ export const createService = async (user, dataMeasurement) => {
       await tx.historiesMeasurement.create({
         data: {
           patient_handler_id: patientHandler.id,
-          parameter: "Oxigen Saturation",
-          value: `${dataMeasurement.spo2} %`,
+          parameter: "Blood Pressure",
+          value: `${dataMeasurement.systolic}/${dataMeasurement.diastolic} mmHg`,
           room: dataMeasurement.room ? dataMeasurement.room : "-",
         },
       });
@@ -128,7 +135,8 @@ export const createService = async (user, dataMeasurement) => {
     });
 
     return {
-      spo2: result.spo2,
+      systolic: result.systolic,
+      diastolic: result.diastolic,
       count_used: deviceUpdate.count_used,
     };
   } catch (error) {

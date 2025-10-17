@@ -10,33 +10,45 @@ export default class FoundDevicesHandler extends BaseHandler {
 
   get topics() {
     return Array.from(gatewayMap.keys()).map(
-      (gateway) => `iotgateway/${gateway}/bluetooth/scan_result`
+      (gateway) => `iotgateway/${gateway}/bluetooth/scan`,
     );
   }
 
   handle(topic, message) {
-    const data = JSON.parse(message.toString());
-    const { device, mac, rssi, distance, device_function, connection } =
-      data.data;
-    const gatewaySn = data.gateway_sn;
+    try {
+      const data = JSON.parse(message.toString());
+      const gatewaySn = data.gateway_sn;
+      const payload = data.data || data;
 
+      const { device, mac, rssi, distance, device_function, connection } =
+        payload;
 
-    const attemptData = {
-      model: device,
-      mac_address: mac,
-      rssi: rssi,
-      distance: distance,
-      device_function: device_function,
-      connection: connection,
-      gateway_id: gatewaySn,
-      type: "measurement",
-    };
+      // Validation
+      if (!device || !mac) {
+        console.warn(
+          `⚠️ Invalid device data received from ${gatewaySn}:`,
+          payload,
+        );
+        return;
+      }
 
+      const attemptData = {
+        model: device,
+        mac_address: mac,
+        rssi,
+        distance,
+        device_function,
+        connection,
+        gateway_id: gatewaySn,
+        type: "measurement",
+      };
 
-    console.log(`✅ Emitting to user ${gatewaySn}:`, {
-      devices: [attemptData],
-    });
-    // this.io.to("gateway1").emit("found_devices", { devices: [attemptData] });
-    this.io.to(gatewaySn).emit("found_devices", { devices: [attemptData] });
+      console.log(`✅ Emitting to user ${gatewaySn}:`, {
+        devices: [attemptData],
+      });
+      this.io.to(gatewaySn).emit("found_devices", { devices: [attemptData] });
+    } catch (err) {
+      console.error("❌ Error handling MQTT message:", err.message);
+    }
   }
 }

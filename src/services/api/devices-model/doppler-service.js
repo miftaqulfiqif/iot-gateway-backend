@@ -48,31 +48,40 @@ export const createService = async (user, dataMeasurement) => {
       });
     }
 
-    // Save Measurement Activity
-    const measurementActivity = await prismaClient.measurementActivity.create({
-      data: {
-        patient_handler_id: patientHandler.id,
-        title: `Pengukuran Doppler`,
-        description: dataMeasurement.description
-          ? dataMeasurement.description
-          : `Hasil pengukuran heart rate : ${dataMeasurement.heart_rate} bpm`,
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-      },
-    });
-
     // Create history
-    const result = await prismaClient.$transaction([
-      prismaClient.measurementHistoriesDoppler.create({
+    const result = await prismaClient.$transaction(async (tx) => {
+      const measurement = await tx.measurementHistoriesDoppler.create({
         data: {
           patient_handler_id: patientHandler.id,
           heart_rate: dataMeasurement.heart_rate,
         },
-      }),
-      prismaClient.deviceConnected.update({
+      });
+
+      await tx.measurementActivity.create({
+        data: {
+          patient_handler_id: patientHandler.id,
+          title: `Pengukuran Doppler`,
+          description: dataMeasurement.description
+            ? dataMeasurement.description
+            : `Hasil pengukuran heart rate : ${dataMeasurement.heart_rate} bpm`,
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+        },
+      });
+
+      await tx.historiesMeasurement.create({
+        data: {
+          patient_handler_id: patientHandler.id,
+          parameter: "Fetal Heart Rate",
+          value: `${dataMeasurement.heart_rate} bpm`,
+          room: dataMeasurement.room ? dataMeasurement.room : "-",
+        },
+      });
+
+      await tx.deviceConnected.update({
         where: {
           id: device.id,
         },
@@ -81,10 +90,10 @@ export const createService = async (user, dataMeasurement) => {
             increment: 1,
           },
         },
-      }),
-    ]);
+      });
 
-    const historyMeasurement = result[0];
+      return measurement;
+    });
 
     const deviceUpdate = await prismaClient.deviceConnected.findUnique({
       where: {
@@ -96,9 +105,8 @@ export const createService = async (user, dataMeasurement) => {
     });
 
     return {
-      id: historyMeasurement.id,
-      heart_rate: historyMeasurement.heart_rate,
-      description: measurementActivity.description,
+      id: result.id,
+      heart_rate: result.heart_rate,
       count_used: deviceUpdate.count_used,
     };
   } catch (error) {
@@ -214,7 +222,7 @@ export const getByPatientIdService = async (
   page,
   limit,
   skip,
-  patientId
+  patientId,
 ) => {
   try {
     const whereCondition = {};
@@ -302,7 +310,7 @@ export const getByDeviceIdService = async (
   page,
   limit,
   skip,
-  deviceId
+  deviceId,
 ) => {
   try {
     const whereCondition = {};

@@ -1,11 +1,9 @@
-import { createService } from "../../services/api/devices-model/pulse-oximeter-fox1-service.js";
+import { createService } from "../../services/api/devices-model/ptb-digi-service.js";
 
 const create = async (req, res, next) => {
   try {
     const result = await createService(req.user, req.body);
-    res
-      .status(200)
-      .json({ message: "Pulse Oximeter FOX 1 created", data: result });
+    res.status(200).json({ message: "PTB Digi created", data: result });
   } catch (error) {
     next(error);
   }

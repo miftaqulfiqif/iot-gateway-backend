@@ -1,4 +1,4 @@
-import { createService } from "../../services/api/devices-model/pulse-oximeter-fox1-service.js";
+import { createService } from "../../services/api/devices-model/tensione-service.js";
 
 const create = async (req, res, next) => {
   try {

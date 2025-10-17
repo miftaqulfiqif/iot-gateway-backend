@@ -63,12 +63,12 @@ export const createService = async (user, dataMeasurement) => {
           patient_id: patientHandler.patient_id,
         },
         update: {
-          temperature: String(dataMeasurement.temperature),
+          body_temperature: String(dataMeasurement.temperature),
           timestamp_body_temperature: new Date(),
         },
         create: {
           patient_id: patientHandler.patient_id,
-          temperature: String(dataMeasurement.temperature),
+          body_temperature: String(dataMeasurement.temperature),
           timestamp_body_temperature: new Date(),
         },
       });
