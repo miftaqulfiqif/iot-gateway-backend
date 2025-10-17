@@ -9,6 +9,7 @@ import {
   deleteDeviceService,
   connectDeviceUsbService,
   getDevicePatientMonitoringService,
+  getMeasurementParameterService,
 } from "../services/api/device-service.js";
 import { prismaClient } from "../applications/database.js";
 
@@ -46,6 +47,7 @@ const connectTcpIP = async (req, res, next) => {
     next(error);
   }
 };
+
 const connectUsb = async (req, res, next) => {
   try {
     const result = await connectDeviceUsbService(req.body);
@@ -65,6 +67,7 @@ const disconnectBluetooth = async (req, res, next) => {
     next(error);
   }
 };
+
 const disconnectTcpIP = async (req, res, next) => {
   try {
     const deviceDisconnecting = await disconnectDeviceTcpIP(
@@ -77,9 +80,15 @@ const disconnectTcpIP = async (req, res, next) => {
     next(error);
   }
 };
+
 const get = async (req, res, next) => {
+  const gatewayId = req.query.gateway_id;
+  const parameter = req.query.params;
+  const isBaby = req.query.is_baby === "true";
+  const query = req.query.query;
+
   try {
-    const devices = await getDevices();
+    const devices = await getDevices(gatewayId, parameter, isBaby, query);
     res.status(200).json({ message: "Get device success", data: devices });
   } catch (error) {
     next(error);
@@ -126,6 +135,16 @@ const getPatientMonitoringDevice = async (req, res, next) => {
   }
 };
 
+const getMeasurementParameter = async (req, res, next) => {
+  try {
+    const result = await getMeasurementParameterService();
+    res
+      .status(200)
+      .json({ message: "Get measurement parameter", data: result });
+  } catch (error) {
+    next(error);
+  }
+};
 export default {
   connectBluetooth,
   connectTcpIP,
@@ -133,6 +152,7 @@ export default {
   disconnectTcpIP,
   connectUsb,
   get,
+  getMeasurementParameter,
   getDevicesConnected,
   getDetail,
   deleteDevice,

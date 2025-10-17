@@ -1,114 +1,152 @@
 import {
-    createRoomService,
-    createBedService,
-    addPatientRoomService,
-    getPatientRoomService,
-    getRoomsService,
-    getBedsService,
-    getDetailRoomService,
-    getRoomByPatientIdService, getBedByRoomIdService
+  createRoomService,
+  createBedService,
+  addPatientRoomService,
+  getPatientRoomService,
+  getRoomsService,
+  getBedsService,
+  getDetailRoomService,
+  getRoomByPatientIdService,
+  getBedByRoomIdService,
+  getRoomsWithGatewaysService,
+  getRoomsForCreateGatewayService,
 } from "../services/api/patient-room-service.js";
-import {prismaClient} from "../applications/database.js";
-
+import { prismaClient } from "../applications/database.js";
 
 const createRoom = async (req, res, next) => {
-    try {
-        const result = await createRoomService(req.body);
-         res.status(200).json({ message: "Room created", data: result });
-     } catch (error) {
-        next(error);
-     }
-}
+  try {
+    const result = await createRoomService(req.body);
+    res.status(200).json({ message: "Room created", data: result });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const getRoom = async (req, res, next) => {
-    try {
-        const result = await getRoomsService();
-        res.status(200).
-        json({
-            message: "Getting rooms successfuly",
-            total_rooms: result.total_rooms,
-            // available_room_count: result.available_room_count,
-            data: result.rooms
-        });
-    } catch (error) {
-        next(error);
-    }
-}
+  try {
+    const result = await getRoomsService();
+    res.status(200).json({
+      message: "Getting rooms successfuly",
+      total_rooms: result.total_rooms,
+      // available_room_count: result.available_room_count,
+      data: result.rooms,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getRoomWithGateway = async (req, res, next) => {
+  try {
+    const result = await getRoomsWithGatewaysService();
+    res.status(200).json({
+      message: "Getting rooms with Gateways",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const createBed = async (req, res, next) => {
-    try {
-        const result = await createBedService(req.body);
-        res.status(200).json({ message: "Bed created", data: result });
-    } catch (error) {
-        next(error);
-    }
-}
+  try {
+    const result = await createBedService(req.body);
+    res.status(200).json({ message: "Bed created", data: result });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const getBed = async (req, res, next) => {
-    try {
-        const result = await getBedsService();
-        res.status(200).json({ message: "Getting beds successfuly", data: result });
-    } catch (error) {
-        next(error);
-    }
-}
+  try {
+    const result = await getBedsService();
+    res.status(200).json({ message: "Getting beds successfuly", data: result });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const addPatientRoom = async (req, res, next) => {
-    try {
-        const result = await addPatientRoomService(req.body);
-        res.status(200).json({ message: "Patient room added", data: result });
-    } catch (error) {
-        next(error);
-    }
-}
+  try {
+    const result = await addPatientRoomService(req.body);
+    res.status(200).json({ message: "Patient room added", data: result });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const getPatientRoom = async (req, res, next) => {
-    try {
-        const result = await getPatientRoomService()
-        res.status(200).json({ message: "Getting patient room successfuly", data: result });
-    } catch (error) {
-        next(error);
-    }
-}
+  try {
+    const result = await getPatientRoomService();
+    res
+      .status(200)
+      .json({ message: "Getting patient room successfuly", data: result });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const getDetailRoom = async (req, res, next) => {
-    const roomId = req.params.room_id;
-    try {
-        const result = await getDetailRoomService(roomId);
-        res.status(200).json({
-            message: "Detail room",
-            data: result
-        });
-    } catch (error) {
-        next(error);
-    }
-}
+  const roomId = req.params.room_id;
+  try {
+    const result = await getDetailRoomService(roomId);
+    res.status(200).json({
+      message: "Detail room",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const getRoomByPatientId = async (req, res, next) => {
-    const patientId = req.params.patient_id;
-    try {
-        const result = await getRoomByPatientIdService(patientId);
-        res.status(200).json({
-            message: "Patient room",
-            data: result
-        })
-    } catch (error) {
-        next(error);
-    }
-}
+  const patientId = req.params.patient_id;
+  try {
+    const result = await getRoomByPatientIdService(patientId);
+    res.status(200).json({
+      message: "Patient room",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const getBedByRoomId = async (req, res, next) => {
-    const roomId = req.params.room_id;
-    const isAvailable = req.query.is_available;
-    try {
-        const result = await getBedByRoomIdService(roomId, isAvailable)
-        res.status(200).json({
-            message: "Beds room",
-            data: result
-        })
-    } catch (error) {
-        next(error);
-    }
-}
+  const roomId = req.params.room_id;
+  const isAvailable = req.query.is_available;
+  try {
+    const result = await getBedByRoomIdService(roomId, isAvailable);
+    res.status(200).json({
+      message: "Beds room",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-export default {createRoom, getRoom, createBed, getBed, addPatientRoom, getPatientRoom, getDetailRoom, getRoomByPatientId, getBedByRoomId};
+const getRoomsForCreateGateway = async (req, res, next) => {
+  try {
+    const query = req.query.query;
+    const result = await getRoomsForCreateGatewayService(query);
+
+    res.status(200).json({ message: "Get rooms successfull", data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export default {
+  createRoom,
+  getRoom,
+  getRoomWithGateway,
+  createBed,
+  getBed,
+  addPatientRoom,
+  getPatientRoom,
+  getDetailRoom,
+  getRoomByPatientId,
+  getBedByRoomId,
+  getRoomsForCreateGateway,
+};

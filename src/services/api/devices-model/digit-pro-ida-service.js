@@ -12,9 +12,25 @@ export const createService = async (user, dataMeasurement) => {
         mac_address: dataMeasurement.device_mac,
       },
     });
-
     if (!device) {
       throw new ResponseError(401, "Device not found");
+    }
+
+    const patient = await prismaClient.patient.findUnique({
+      where: {
+        id: dataMeasurement.patient_id,
+      },
+      select: {
+        id: true,
+        mother: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+    if (!patient) {
+      throw new ResponseError(401, "Patient not found");
     }
 
     // Check patient handler
@@ -49,38 +65,76 @@ export const createService = async (user, dataMeasurement) => {
       });
     }
 
-    // get baby
-    const baby = await prismaClient.baby.findUnique({
-      where: {
-        id: dataMeasurement.baby_id,
-      },
-      select: {
-        name: true,
-      },
-    });
-
-    // Save Measurement Activity
-    const measurementActivity = await prismaClient.measurementActivity.create({
-      data: {
-        patient_handler_id: patientHandler.id,
-        title: `Pengukuran Berat Badan Ibu dan Anak. ${baby.name}`,
-        description: dataMeasurement.description
-          ? dataMeasurement.description
-          : `Hasil pengukuran berat badan Ibu : ${dataMeasurement.weight_mother} kg dan Anak : ${dataMeasurement.weight_baby} kg`,
-      },
-    });
-
     // Create history
-    const result = await prismaClient.$transaction([
-      prismaClient.measurementHistoriesDigitProIda.create({
+    const result = await prismaClient.$transaction(async (tx) => {
+      const measurement = await tx.measurementHistoriesDigitProIda.create({
         data: {
-          baby_id: dataMeasurement.baby_id,
           weight_mother: dataMeasurement.weight_mother,
           weight_baby: dataMeasurement.weight_baby,
           patient_handler_id: patientHandler.id,
         },
-      }),
-      prismaClient.deviceConnected.update({
+      });
+
+      // Save last measurement babies
+      await tx.lastMeasurementPatient.upsert({
+        where: {
+          patient_id: patientHandler.patient_id,
+        },
+        update: {
+          body_weight: String(dataMeasurement.weight_baby),
+          timestamp_body_weight: new Date(),
+        },
+        create: {
+          patient_id: patientHandler.patient_id,
+          body_weight: String(dataMeasurement.weight_baby),
+          timestamp_body_weight: new Date(),
+        },
+      });
+
+      // Save last measurement parent
+      await tx.lastMeasurementPatient.upsert({
+        where: {
+          patient_id: patient.mother.id,
+        },
+        update: {
+          body_weight: String(dataMeasurement.weight_mother),
+          timestamp_body_weight: new Date(),
+        },
+        create: {
+          patient_id: patient.mother.id,
+          body_weight: String(dataMeasurement.weight_mother),
+          timestamp_body_weight: new Date(),
+        },
+      });
+
+      // Create measurement activity
+      await tx.measurementActivity.create({
+        data: {
+          patient_handler_id: patientHandler.id,
+          title: `Pengukuran Berat Badan Ibu dan Anak`,
+          description: dataMeasurement.description
+            ? dataMeasurement.description
+            : `Hasil pengukuran berat badan Ibu : ${dataMeasurement.weight_mother} kg dan Anak : ${dataMeasurement.weight_baby} kg`,
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+        },
+      });
+
+      // Create histories measurement
+      await tx.historiesMeasurement.create({
+        data: {
+          patient_handler_id: patientHandler.id,
+          parameter: "Mother and Child Weight",
+          value: `${dataMeasurement.weight_mother} / ${dataMeasurement.weight_baby} kg`,
+          room: dataMeasurement.room ? dataMeasurement.room : "-",
+        },
+      });
+
+      // Update use device count
+      await tx.deviceConnected.update({
         where: {
           id: device.id,
         },
@@ -89,10 +143,10 @@ export const createService = async (user, dataMeasurement) => {
             increment: 1,
           },
         },
-      }),
-    ]);
+      });
 
-    const historyMeasurement = result[0];
+      return measurement;
+    });
 
     const deviceUpdate = await prismaClient.deviceConnected.findUnique({
       where: {
@@ -104,10 +158,9 @@ export const createService = async (user, dataMeasurement) => {
     });
 
     return {
-      id: historyMeasurement.id,
-      weight_mother: historyMeasurement.weight_mother,
-      weight_baby: historyMeasurement.weight_baby,
-      description: measurementActivity.description,
+      id: result.id,
+      weight_mother: result.weight_mother,
+      weight_baby: result.weight_baby,
       count_used: deviceUpdate.count_used,
     };
   } catch (error) {
@@ -238,7 +291,7 @@ export const getAllService = async (query, page, limit, skip, patient_id) => {
       patient_handler: {
         ...history.patient_handler,
         baby: babies.find(
-          (baby) => baby.patient_id === history.patient_handler?.patient?.id
+          (baby) => baby.patient_id === history.patient_handler?.patient?.id,
         ),
       },
     }));
@@ -259,7 +312,7 @@ export const getByPatientIdService = async (
   page,
   limit,
   skip,
-  patientId
+  patientId,
 ) => {
   try {
     const whereCondition = {};
@@ -372,7 +425,7 @@ export const getByPatientIdService = async (
       patient_handler: {
         ...h.patient_handler,
         baby: babies.find(
-          (b) => b.patient_id === h.patient_handler?.patient?.id
+          (b) => b.patient_id === h.patient_handler?.patient?.id,
         ),
       },
     }));
@@ -393,7 +446,7 @@ export const getByDeviceIdService = async (
   page,
   limit,
   skip,
-  deviceId
+  deviceId,
 ) => {
   try {
     const whereCondition = {};
@@ -497,7 +550,7 @@ export const getByDeviceIdService = async (
       patient_handler: {
         ...h.patient_handler,
         baby: babies.find(
-          (b) => b.patient_id === h.patient_handler?.patient?.id
+          (b) => b.patient_id === h.patient_handler?.patient?.id,
         ),
       },
     }));
@@ -616,7 +669,7 @@ export const getByUserIdService = async (query, page, limit, skip, userId) => {
       patient_handler: {
         ...h.patient_handler,
         baby: babies.find(
-          (b) => b.patient_id === h.patient_handler?.patient?.id
+          (b) => b.patient_id === h.patient_handler?.patient?.id,
         ),
       },
     }));

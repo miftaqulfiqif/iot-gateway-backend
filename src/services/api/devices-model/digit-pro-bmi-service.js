@@ -49,28 +49,12 @@ export const createService = async (user, dataMeasurement) => {
       });
     }
 
-    // Save Measurement Activity
-    const measurementActivity = await prismaClient.measurementActivity.create({
-      data: {
-        patient_handler_id: patientHandler.id,
-        title: `Pengukuran BMI`,
-        description: dataMeasurement.note
-          ? dataMeasurement.note
-          : `Hasil pengukuran : ${dataMeasurement.bmi} kg`,
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-      },
-    });
-
     // Format FHIR
     const dataFhir = formatObservation(
       satuSehatEnv.encounter_id,
       user.ihs_number,
       satuSehatEnv.patient_ihs_number,
-      dataMeasurement.weight
+      dataMeasurement.weight,
     );
 
     // Create History
@@ -92,6 +76,49 @@ export const createService = async (user, dataMeasurement) => {
           obesity: dataMeasurement.obesity,
           body_age: dataMeasurement.body_age,
           lbm: dataMeasurement.lbm,
+        },
+      });
+
+      await tx.lastMeasurementPatient.upsert({
+        where: {
+          patient_id: patientHandler.patient_id,
+        },
+        update: {
+          body_weight: String(dataMeasurement.weight),
+          body_height: String(dataMeasurement.height),
+          timestamp_body_weight: new Date(),
+          timestamp_body_height: new Date(),
+        },
+        create: {
+          patient_id: patientHandler.patient_id,
+          body_weight: String(dataMeasurement.weight),
+          body_height: String(dataMeasurement.height),
+          timestamp_body_weight: new Date(),
+          timestamp_body_height: new Date(),
+        },
+      });
+
+      await tx.measurementActivity.create({
+        data: {
+          patient_handler_id: patientHandler.id,
+          title: `Pengukuran BMI`,
+          description: dataMeasurement.note
+            ? dataMeasurement.note
+            : `Hasil pengukuran : ${dataMeasurement.bmi} kg`,
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+        },
+      });
+
+      await tx.historiesMeasurement.create({
+        data: {
+          patient_handler_id: patientHandler.id,
+          parameter: "BMI",
+          value: `${dataMeasurement.bmi}`,
+          room: dataMeasurement.room ? dataMeasurement.room : "-",
         },
       });
 
@@ -119,16 +146,16 @@ export const createService = async (user, dataMeasurement) => {
             },
             {
               timeout: 10000,
-            }
+            },
           );
         } catch (error) {
-          // Throw supaya transaksi rollback
+          // Throw transaction rollback
           console.error(
             "Sent to SatuSehat error:",
-            error.response?.data || error.message
+            error.response?.data || error.message,
           );
           throw new Error(
-            `Sent to SatuSehat error: ${error.response?.data.issue[0].code}`
+            `Sent to SatuSehat error: ${error.response?.data.issue[0].code}`,
           );
         }
       }
@@ -159,7 +186,6 @@ export const createService = async (user, dataMeasurement) => {
       obesity: result.obesity,
       body_age: result.body_age,
       lbm: result.lbm,
-      description: measurementActivity.description,
       count_used: deviceUpdate.count_used,
       encounter_id: satuSehatEnv.encounter_id ? satuSehatEnv.encounter_id : "",
       is_satusehat: satuSehatEnv.encounter_id ? true : false,
@@ -290,7 +316,7 @@ export const getByPatientIdService = async (
   page,
   limit,
   skip,
-  patientId
+  patientId,
 ) => {
   try {
     const whereCondition = {};
@@ -391,7 +417,7 @@ export const getByDeviceIdService = async (
   page,
   limit,
   skip,
-  deviceId
+  deviceId,
 ) => {
   try {
     const whereCondition = {};
