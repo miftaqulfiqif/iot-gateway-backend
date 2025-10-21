@@ -16,6 +16,10 @@ export const createService = async (user, dataMeasurement) => {
       throw new ResponseError(401, "Device not found");
     }
 
+    if (device.device_function !== "digitpro_ida") {
+      throw new ResponseError(401, "Invalid device type");
+    }
+
     const patient = await prismaClient.patient.findUnique({
       where: {
         id: dataMeasurement.patient_id,

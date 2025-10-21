@@ -29,6 +29,8 @@ const get = async (req, res, next) => {
       current_page: page,
       total_items: result.total ?? 0,
       total_pages: Math.ceil(result.total / limit) || 1,
+      total_patient: result.total_patient,
+      total_today: result.measurement_today,
       data: result.data,
     });
   } catch (error) {
@@ -57,10 +59,12 @@ const getByPatientID = async (req, res, next) => {
       query,
       patientID,
     );
+
     res.status(200).json({
       current_page: page,
       total_items: result.total ?? 0,
       total_pages: Math.ceil(result.total / limit) || 1,
+
       data: result.data,
     });
   } catch (error) {

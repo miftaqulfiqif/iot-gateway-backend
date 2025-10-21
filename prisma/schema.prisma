@@ -215,6 +215,7 @@ model PatientHandler {
   measurement_histories_tensione        MeasurementHistoriesTensione[]
   measurement_histories_pulse_oximeter_fox1        MeasurementHistoriesPulseOximeterFox1[]
   measurement_histories_ptb_digi        MeasurementHistoriesPTBDigi[]
+  measurement_histories_mtr_baby002        MeasurementHistoriesMTRBaby002[]
   central_monitor                      CentralMonitor[]
   measurement_histories_pm9000         MeasurementHistoriesPM9000[]
   measurement_histories_ds001          MeasurementHistoriesDS001[]
@@ -526,6 +527,7 @@ model MeasurementHistoriesPulseOximeterFox1 {
   @@map("measurement_histories_pulse_oximeter_fox_1")
 }
 
+// PTB Digi
 model MeasurementHistoriesPTBDigi {
   id String @id @default(uuid())
   distance Float @db.Float
@@ -535,6 +537,16 @@ model MeasurementHistoriesPTBDigi {
   patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
 
   @@map("measurement_histories_ptb_digi")
+}
+
+// MTR Baby 002
+model MeasurementHistoriesMTRBaby002 {
+  id String @id @default(uuid())
+  baby_height Float @db.Float
+  recorded_at DateTime @default(now())
+
+  patient_handler_id String
+  patient_handler PatientHandler @relation(fields: [patient_handler_id], references: [id])
 }
 
 model MeasurementHistoriesPM9000 {

@@ -17,6 +17,7 @@ import ListenMft01 from "./mqtt/handlers/listen-mft01.js";
 import ListenTensiOne from "./mqtt/handlers/listen-tensione.js";
 import ListenPulseOximeterFox1 from "./mqtt/handlers/listen-pulse-oximeter-fox-1.js";
 import ListenPtbDigi from "./mqtt/handlers/listen-ptb-digi.js";
+import ListenMtrBaby002 from "./mqtt/handlers/listen-mtr-baby002.js";
 
 const mqttRouter = new MqttRouter(mqttClient, io);
 
@@ -37,6 +38,7 @@ await mqttRouter.registerHandlers([
   ListenTensiOne,
   ListenPulseOximeterFox1,
   ListenPtbDigi,
+  ListenMtrBaby002,
 ]);
 
 mqttRouter.init();

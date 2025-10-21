@@ -322,7 +322,7 @@ export const getDevices = async (gatewayId, params, isBaby, query) => {
 
   if (!isBaby) {
     whereClause.device_function = {
-      notIn: ["digitpro_baby", "digitpro_ida"],
+      notIn: ["digitpro_baby", "digitpro_ida", "mtr_baby002"],
     };
   }
 
@@ -569,6 +569,7 @@ const DEVICE_PARAMETER_MAP = {
     MeasurementParameter.PULSE_RATE,
   ],
   height_gauge: [MeasurementParameter.BODY_HEIGHT],
+  mtr_baby002: [MeasurementParameter.BODY_HEIGHT],
 };
 
 // Konfersi string ke enum prism

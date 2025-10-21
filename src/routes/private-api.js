@@ -21,6 +21,7 @@ import measurementHistoriesThermogunMft01 from "../controllers/devices-model/the
 import measurementHistoriesPulseOximeterFox1 from "../controllers/devices-model/pulse-oximeter-fox1-controller.js";
 import measurementHistoriesTensione from "../controllers/devices-model/tensione-controller.js";
 import measurementHistoriesPTBDigiController from "../controllers/devices-model/ptb-digi-controller.js";
+import measurementHistoriesMTRBaby002Controller from "../controllers/devices-model/mtr-baby002-controller.js";
 
 const privateRouter = new express.Router();
 privateRouter.use(authMiddleware);
@@ -207,6 +208,12 @@ privateRouter.post(
 privateRouter.post(
   "/api/measurement-histories-tensione",
   measurementHistoriesTensione.create,
+);
+
+// MTR Baby 002
+privateRouter.post(
+  "/api/measurement-histories-mtr-baby002",
+  measurementHistoriesMTRBaby002Controller.create,
 );
 
 // Measurement PM 9000
