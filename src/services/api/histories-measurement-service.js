@@ -151,10 +151,25 @@ export const getMeasurementsService = async (page, limit, skip, query) => {
         recorded_at: p.recorded_at,
       };
     });
+
+    const patientCount = await prismaClient.patient.count();
+    const countToday = historiesMeasurement.filter((p) => {
+      const recorded = new Date(p.recorded_at);
+      const today = new Date();
+
+      return (
+        recorded.getDate() === today.getDate() &&
+        recorded.getMonth() === today.getMonth() &&
+        recorded.getFullYear() === today.getFullYear()
+      );
+    }).length;
+
     return {
       total,
       page,
       limit,
+      total_patient: patientCount,
+      measurement_today: countToday,
       data: historiesMeasurementData,
     };
   } catch (error) {

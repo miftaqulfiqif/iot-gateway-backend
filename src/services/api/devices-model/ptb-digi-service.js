@@ -11,8 +11,13 @@ export const createService = async (user, dataMeasurement) => {
         mac_address: dataMeasurement.device_mac,
       },
     });
-    if (!device && device.device_function !== "height_gauge") {
+
+    if (!device) {
       throw new ResponseError(401, "Device not found");
+    }
+
+    if (device.device_function !== "height_gauge") {
+      throw new ResponseError(401, "Invalid device type");
     }
 
     // Check patient handler

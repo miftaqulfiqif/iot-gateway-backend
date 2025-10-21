@@ -11,8 +11,13 @@ export const createService = async (user, dataMeasurement) => {
         mac_address: dataMeasurement.device_mac,
       },
     });
-    if (!device && device.device_function !== "height_gauge") {
+
+    if (!device) {
       throw new ResponseError(401, "Device not found");
+    }
+
+    if (device.device_function !== "mtr_baby002") {
+      throw new ResponseError(401, "Invalid device type");
     }
 
     // Check patient handler
@@ -49,9 +54,9 @@ export const createService = async (user, dataMeasurement) => {
 
     // Create history
     const result = await prismaClient.$transaction(async (tx) => {
-      const measurement = await tx.measurementHistoriesPTBDigi.create({
+      const measurement = await tx.measurementHistoriesMTRBaby002.create({
         data: {
-          distance: dataMeasurement.distance,
+          baby_height: dataMeasurement.baby_height,
           patient_handler: {
             connect: { id: patientHandler.id },
           },
@@ -63,11 +68,11 @@ export const createService = async (user, dataMeasurement) => {
           patient_id: patientHandler.patient_id,
         },
         update: {
-          body_height: String(dataMeasurement.distance),
+          body_height: String(dataMeasurement.baby_height),
           timestamp_body_height: new Date(),
         },
         create: {
-          body_height: String(dataMeasurement.distance),
+          body_height: String(dataMeasurement.baby_height),
           timestamp_body_height: new Date(),
           patient: {
             connect: {
@@ -80,10 +85,10 @@ export const createService = async (user, dataMeasurement) => {
       await tx.measurementActivity.create({
         data: {
           patient_handler_id: patientHandler.id,
-          title: "Pengukuran Tinggi Badan",
+          title: "Pengukuran Tinggi Badan Bayi",
           description: dataMeasurement.description
             ? dataMeasurement.description
-            : `Hasil pengukuran : ${dataMeasurement.distance} cm`,
+            : `Hasil pengukuran : ${dataMeasurement.baby_height} cm`,
         },
         select: {
           id: true,
@@ -96,7 +101,7 @@ export const createService = async (user, dataMeasurement) => {
         data: {
           patient_handler_id: patientHandler.id,
           parameter: "Body Height",
-          value: `${dataMeasurement.distance} %`,
+          value: `${dataMeasurement.baby_height} cm`,
           room: dataMeasurement.room ? dataMeasurement.room : "-",
         },
       });
@@ -125,7 +130,7 @@ export const createService = async (user, dataMeasurement) => {
     });
 
     return {
-      distance: result.distance,
+      baby_height: result.baby_height,
       count_used: deviceUpdate.count_used,
     };
   } catch (error) {

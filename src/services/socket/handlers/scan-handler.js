@@ -8,10 +8,10 @@ export default class ScanHandler extends BaseHandler {
   }
 
   handle(socket, data) {
-    const { user_id, data: payload } = data;
+    const { gateway_sn, data: payload } = data;
 
-    socket.to(user_id).emit(this.event, data);
-    console.log(`Received scan from ${user_id}:`, data);
+    socket.to(gateway_sn).emit(this.event, data);
+    console.log(`Received scan from ${gateway_sn}:`, data);
 
     mqttClient.publish(payload.topic, payload.payload, (err) => {
       if (err) {
