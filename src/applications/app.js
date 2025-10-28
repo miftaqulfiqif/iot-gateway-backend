@@ -18,7 +18,10 @@ const allowedOrigins = [
   "http://192.168.13.189:5173",
   "http://192.168.8.180:5173",
 ];
-const mqttClient = mqtt.connect("mqtt://192.168.13.156:1883");
+const mqttClient = mqtt.connect("mqtt://192.168.13.156:1883", {
+    username: process.env.MQTT_USERNAME,
+    password: process.env.MQTT_PASSWORD,
+});
 
 // ==== Initialization ====
 const app = express();
