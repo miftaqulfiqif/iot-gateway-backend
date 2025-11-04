@@ -14,6 +14,7 @@ import ScanHandler from "./socket/handlers/scan-handler.js";
 import ConnectDeviceTcpIpHandler from "./socket/handlers/connect-device-tcpip.js";
 import { setSocketIO } from "./socket/socket-instance.js";
 import GetIpAddressIotGatewayHandler from "./socket/handlers/get-ip-address-iot-gateway-handler.js";
+import DisconnectDeviceBluetooth from "./socket/handlers/disconnect-device-bluetooth.js";
 
 export function setupSocket(io) {
   setSocketIO(io);
@@ -26,6 +27,9 @@ export function setupSocket(io) {
   router.registerHandler(ConnectDeviceTcpIpHandler);
   router.registerHandler(DeleteDeviceHandler);
   router.registerHandler(GetIpAddressIotGatewayHandler)
+
+    // Device Management
+    router.registerHandler(DisconnectDeviceBluetooth);
 
   //DigitProIda
   router.registerHandler(StartProIDA);

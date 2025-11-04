@@ -42,8 +42,8 @@ const login = async (req, res, next) => {
 
     res.cookie("token", result.token, {
       httpOnly: true,
-      secure: false,
-      sameSite: "Lax",
+      secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     });
 
     const { token, ...userWithoutToken } = result;
