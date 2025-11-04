@@ -12,9 +12,12 @@ import {loadGatewaysFromDB} from "./services/gateway-utils.js";
 setupSocket(io);
 
 async function main() {
-  await loadGatewaysFromDB();
-
-  await import("./services/mqtt-services.js");
+    if (process.env.SKIP_DB !== "true"){
+        await loadGatewaysFromDB();
+        await import("./services/mqtt-services.js");
+    } else {
+       console.log("⚠️️ Skipping DB & MQTT services in build-only mode")
+    }
 
   server.listen(port, "0.0.0.0", () => {
     console.log(`🚀 Server running on http://localhost:${port}`);
